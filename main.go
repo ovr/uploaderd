@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 	"io/ioutil"
-	"gopkg.in/gographics/imagick.v3/imagick" // v1 for 6.7, v2 for 6.9, v3 for 7+
 	"encoding/json"
+	"gopkg.in/gographics/imagick.v3/imagick" // v3 for 7+
 )
 
 type ErrorJson struct {
@@ -21,20 +21,6 @@ func ErrorResponse(rw http.ResponseWriter, message string, args ...interface{}) 
 
 	rw.Write(resp)
 	//http.Error(rw, "Internal Server Error", http.StatusInternalServerError)
-}
-
-func NewImageFromByteSlice(buff []byte) (*imagick.MagickWand, error) {
-	mw := imagick.NewMagickWand()
-
-	readImageBlobError := mw.ReadImageBlob(buff)
-	if readImageBlobError != nil {
-		// Destroy via exit, need to protect memory leak
-		mw.Destroy()
-
-		return nil, readImageBlobError
-	}
-
-	return mw, nil
 }
 
 func uploadImageHandler(rw http.ResponseWriter, req *http.Request) {
@@ -51,17 +37,19 @@ func uploadImageHandler(rw http.ResponseWriter, req *http.Request) {
 		panic(err)
 	}
 
-	err = imageBox.ResizeImage(100, 100, imagick.FILTER_QUADRATIC);
+	defer imageBox.Destroy();
+
+	err = imageBox.ResizeImage(100, 100);
 	if err != nil {
 		panic(err)
 	}
 
-	err = imageBox.ResizeImage(75, 75, imagick.FILTER_QUADRATIC);
+	err = imageBox.ResizeImage(75, 75);
 	if err != nil {
 		panic(err)
 	}
 
-	err = imageBox.ResizeImage(50, 50, imagick.FILTER_QUADRATIC);
+	err = imageBox.ResizeImage(50, 50);
 	if err != nil {
 		panic(err)
 	}
