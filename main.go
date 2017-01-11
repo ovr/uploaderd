@@ -47,7 +47,20 @@ func uploadImageHandler(rw http.ResponseWriter, req *http.Request) {
 
 	imageBox.FixOrientation()
 
-	var dims []ImageDim = []ImageDim {
+	for _, imgDim := range resizeImageDimmention {
+		err = imageBox.ResizeImage(imgDim.Width, imgDim.Height);
+		if err != nil {
+			panic(err)
+		}
+
+		uploadChannel <- imageBox.GetImageBlob();
+	}
+
+	ErrorResponse(rw, imageBox.GetImageFormat())
+}
+
+var (
+	resizeImageDimmention []ImageDim = []ImageDim {
 		ImageDim {
 			Width: 100,
 			Height: 100,
@@ -60,22 +73,8 @@ func uploadImageHandler(rw http.ResponseWriter, req *http.Request) {
 			Width: 50,
 			Height: 50,
 		},
-	};
-
-
-	for _, dim := range dims {
-		err = imageBox.ResizeImage(dim.Width, dim.Height);
-		if err != nil {
-			panic(err)
-		}
-
-		uploadChannel <- imageBox.GetImageBlob();
 	}
 
-	ErrorResponse(rw, imageBox.GetImageFormat())
-}
-
-var (
 	// upload to S3 channel
 	uploadChannel chan []byte
 )
