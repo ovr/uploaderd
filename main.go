@@ -7,7 +7,21 @@ import (
 	"os"
 	"io/ioutil"
 	"gopkg.in/gographics/imagick.v3/imagick" // v1 for 6.7, v2 for 6.9, v3 for 7+
+	"encoding/json"
 )
+
+type ErrorJson struct {
+	Error map[string]string `json:"error"`
+}
+
+func ErrorResponse(rw http.ResponseWriter, message string, args ...interface{}) {
+	data := &ErrorJson{make(map[string]string)}
+	data.Error["message"] = fmt.Sprintf(message, args...)
+	resp, _ := json.Marshal(data)
+
+	rw.Write(resp)
+	//http.Error(rw, "Internal Server Error", http.StatusInternalServerError)
+}
 
 func NewImageFromByteSlice(buff []byte) (*imagick.MagickWand, error) {
 	mw := imagick.NewMagickWand()
@@ -37,7 +51,22 @@ func uploadImageHandler(rw http.ResponseWriter, req *http.Request) {
 		panic(err)
 	}
 
-	imageBox.GetImageFormat()
+	err = imageBox.ResizeImage(100, 100, imagick.FILTER_QUADRATIC);
+	if err != nil {
+		panic(err)
+	}
+
+	err = imageBox.ResizeImage(75, 75, imagick.FILTER_QUADRATIC);
+	if err != nil {
+		panic(err)
+	}
+
+	err = imageBox.ResizeImage(50, 50, imagick.FILTER_QUADRATIC);
+	if err != nil {
+		panic(err)
+	}
+
+	ErrorResponse(rw, imageBox.GetImageFormat())
 }
 
 func main() {
@@ -58,5 +87,5 @@ func main() {
 		}
 	}
 
-	r.ListenAndServe(":7777", errorHandler)
+	r.ListenAndServe(":8989", errorHandler)
 }
