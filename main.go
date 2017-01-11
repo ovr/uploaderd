@@ -8,6 +8,9 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"gopkg.in/gographics/imagick.v3/imagick" // v3 for 7+
+	zmq "github.com/pebbe/zmq4"
+	"log"
+	"strconv"
 )
 
 type ErrorJson struct {
@@ -93,7 +96,45 @@ var (
 	uploadChannel chan ImageUploadTask
 )
 
+func tryUUID(client *zmq.Socket) (uint64, error) {
+	_, err := client.SendMessage("GEN");
+	if err != nil {
+		return 0, err
+	}
+
+	reply, err := client.RecvMessage(0)
+	if err != nil {
+		return 0, err
+	}
+
+	res, err := strconv.ParseUint(reply[0], 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return res, nil
+}
+
+func generateUUID(client *zmq.Socket) (uint64)  {
+	for i := 0; i < 5; i++ {
+		res, err := tryUUID(client);
+		if err == nil {
+			return res;
+		}
+	}
+
+	panic("Cannot generate UUID after N tries")
+}
+
 func main() {
+	client, _ := zmq.NewSocket(zmq.REQ)
+	client.Connect("tcp://127.0.0.1:5599")
+
+	for {
+		log.Print(generateUUID(client))
+	}
+
+
 	imagick.Initialize() // LOAD ONLY ONCE, because DEAD LOCK!! @ovr
 	defer imagick.Terminate()
 
