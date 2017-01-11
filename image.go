@@ -26,6 +26,10 @@ func NewImageFromByteSlice(buff []byte) (*ImageBox, error) {
 	return imgBox, nil
 }
 
+func (this *ImageBox) GetImageBlob() []byte {
+	return this.mw.GetImageBlob();
+}
+
 func (this *ImageBox) FixOrientation() {
 	orientation := this.mw.GetImageOrientation()
 

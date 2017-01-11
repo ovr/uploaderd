@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"gopkg.in/gographics/imagick.v3/imagick" // v3 for 7+
+	"log"
 )
 
 type ErrorJson struct {
@@ -21,6 +22,11 @@ func ErrorResponse(rw http.ResponseWriter, message string, args ...interface{}) 
 
 	rw.Write(resp)
 	//http.Error(rw, "Internal Server Error", http.StatusInternalServerError)
+}
+
+type ImageDim struct {
+	Width uint
+	Height uint
 }
 
 func uploadImageHandler(rw http.ResponseWriter, req *http.Request) {
@@ -41,23 +47,38 @@ func uploadImageHandler(rw http.ResponseWriter, req *http.Request) {
 
 	imageBox.FixOrientation()
 
-	err = imageBox.ResizeImage(100, 100);
-	if err != nil {
-		panic(err)
-	}
+	var dims []ImageDim = []ImageDim {
+		ImageDim {
+			Width: 100,
+			Height: 100,
+		},
+		ImageDim {
+			Width: 75,
+			Height: 75,
+		},
+		ImageDim {
+			Width: 50,
+			Height: 50,
+		},
+	};
 
-	err = imageBox.ResizeImage(75, 75);
-	if err != nil {
-		panic(err)
-	}
 
-	err = imageBox.ResizeImage(50, 50);
-	if err != nil {
-		panic(err)
+	for _, dim := range dims {
+		err = imageBox.ResizeImage(dim.Width, dim.Height);
+		if err != nil {
+			panic(err)
+		}
+
+		uploadChannel <- imageBox.GetImageBlob();
 	}
 
 	ErrorResponse(rw, imageBox.GetImageFormat())
 }
+
+var (
+	// upload to S3 channel
+	uploadChannel chan []byte
+)
 
 func main() {
 	imagick.Initialize() // LOAD ONLY ONCE, because DEAD LOCK!! @ovr
@@ -76,6 +97,17 @@ func main() {
 			os.Exit(2)
 		}
 	}
+
+	uploadChannel = make(chan []byte, 20); // Async channel but with small buffer 20 <= X <= THINK
+
+	go func() {
+		for {
+			select {
+			case imageBlob := <- uploadChannel:
+				log.Print("[Event] New Image to Upload ", len(imageBlob));
+			}
+		}
+	}();
 
 	r.ListenAndServe(":8989", errorHandler)
 }
