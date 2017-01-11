@@ -3,8 +3,8 @@ package main
 import "gopkg.in/gographics/imagick.v3/imagick" // v3 for 7+
 
 type ImageBox struct {
-	mw                   *imagick.MagickWand
-	Width, Height        uint
+	mw            *imagick.MagickWand
+	Width, Height uint
 }
 
 func NewImageFromByteSlice(buff []byte) (*ImageBox, error) {
@@ -19,12 +19,44 @@ func NewImageFromByteSlice(buff []byte) (*ImageBox, error) {
 	}
 
 	imgBox := &ImageBox{
-		mw: mw,
-		Width: mw.GetImageWidth(),
+		mw:     mw,
+		Width:  mw.GetImageWidth(),
 		Height: mw.GetImageHeight(),
 	};
-
 	return imgBox, nil
+}
+
+func (this *ImageBox) FixOrientation() {
+	orientation := this.mw.GetImageOrientation()
+
+	switch orientation {
+	case imagick.ORIENTATION_TOP_LEFT:
+		// skip it
+		break
+	case imagick.ORIENTATION_TOP_RIGHT:
+		this.mw.FlopImage()
+		break
+	case imagick.ORIENTATION_BOTTOM_RIGHT:
+		this.mw.RotateImage(imagick.NewPixelWand(), 180)
+		break
+	case imagick.ORIENTATION_BOTTOM_LEFT:
+		this.mw.FlipImage()
+		break
+	case imagick.ORIENTATION_LEFT_TOP:
+		this.mw.FlipImage()
+		this.mw.RotateImage(imagick.NewPixelWand(), 90)
+		break
+	case imagick.ORIENTATION_RIGHT_TOP:
+		this.mw.RotateImage(imagick.NewPixelWand(), 90)
+		break
+	case imagick.ORIENTATION_RIGHT_BOTTOM:
+		this.mw.FlopImage()
+		this.mw.RotateImage(imagick.NewPixelWand(), -90)
+		break
+	case imagick.ORIENTATION_LEFT_BOTTOM:
+		this.mw.RotateImage(imagick.NewPixelWand(), -90)
+		break
+	}
 }
 
 func (this *ImageBox) ResizeImage(width, height uint) error {

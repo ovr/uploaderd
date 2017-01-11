@@ -39,6 +39,8 @@ func uploadImageHandler(rw http.ResponseWriter, req *http.Request) {
 
 	defer imageBox.Destroy();
 
+	imageBox.FixOrientation()
+
 	err = imageBox.ResizeImage(100, 100);
 	if err != nil {
 		panic(err)
