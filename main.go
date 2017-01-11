@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"gopkg.in/gographics/imagick.v3/imagick" // v3 for 7+
-	"log"
 )
 
 type ErrorJson struct {
@@ -99,14 +98,7 @@ func main() {
 
 	uploadChannel = make(chan []byte, 20); // Async channel but with small buffer 20 <= X <= THINK
 
-	go func() {
-		for {
-			select {
-			case imageBlob := <- uploadChannel:
-				log.Print("[Event] New Image to Upload ", len(imageBlob));
-			}
-		}
-	}();
+	go startUploader(uploadChannel);
 
 	r.ListenAndServe(":8989", errorHandler)
 }
