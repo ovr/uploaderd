@@ -46,16 +46,31 @@ func uploadImageHandler(rw http.ResponseWriter, req *http.Request) {
 
 	imageBox.FixOrientation()
 
+	// Upload original file
+	uploadChannel <- ImageUploadTask{
+		Buffer: imageBox.GetImageBlob(),
+		Path: "orig/1.jpg",
+	}
+
 	for _, imgDim := range resizeImageDimmention {
 		err = imageBox.ResizeImage(imgDim.Width, imgDim.Height);
 		if err != nil {
 			panic(err)
 		}
 
-		uploadChannel <- imageBox.GetImageBlob();
+		uploadChannel <- ImageUploadTask{
+			Buffer: imageBox.GetImageBlob(),
+			Path: fmt.Sprintf("photos/%sx%s.jpg", imgDim.Width, imgDim.Height),
+		}
 	}
 
 	ErrorResponse(rw, imageBox.GetImageFormat())
+}
+
+type ImageUploadTask struct {
+	// Array in slice, in-memory file
+	Buffer []byte
+	Path string
 }
 
 var (
@@ -75,7 +90,7 @@ var (
 	}
 
 	// upload to S3 channel
-	uploadChannel chan []byte
+	uploadChannel chan ImageUploadTask
 )
 
 func main() {
@@ -96,7 +111,7 @@ func main() {
 		}
 	}
 
-	uploadChannel = make(chan []byte, 20); // Async channel but with small buffer 20 <= X <= THINK
+	uploadChannel = make(chan ImageUploadTask, 500); // Async channel but with small buffer 20 <= X <= THINK
 
 	go startUploader(uploadChannel);
 
