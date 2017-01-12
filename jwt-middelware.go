@@ -21,7 +21,7 @@ func createJWTMiddelWare(config JWTConfig) iris.HandlerFunc {
 			UseJSONNumber: true,
 		}
 
-		_, err := parser.Parse(authToken, func(token *jwt.Token) (interface{}, error) {
+		parsedToken, err := parser.Parse(authToken, func(token *jwt.Token) (interface{}, error) {
 			// Don't forget to validate the alg is what you expect:
 
 			//jwt.SigningMethodHS256.Verify()
@@ -37,8 +37,18 @@ func createJWTMiddelWare(config JWTConfig) iris.HandlerFunc {
 				iris.StatusForbidden,
 				newErrorJson("Your X-AUTH-TOKEN is not valid"),
 			)
-		} else {
-			ctx.Next()
+			return
 		}
+
+		if !parsedToken.Valid {
+			ctx.JSON(
+				iris.StatusForbidden,
+				newErrorJson("Your X-AUTH-TOKEN is not valid"),
+			)
+			return
+		}
+
+		ctx.Set("jwt", parsedToken);
+		ctx.Next()
 	})
 }
