@@ -33,8 +33,12 @@ type ImageDim struct {
 	Height uint
 }
 
+func isImageContentType(contentType string) bool {
+	return contentType == "image/png" || contentType == "image/jpeg" || contentType == "image/gif"
+}
+
 func uploadImageHandler(rw http.ResponseWriter, req *http.Request) {
-	multiPartFile, _, err := req.FormFile("file")
+	multiPartFile, info, err := req.FormFile("file")
 	if err != nil {
 		ErrorResponse(rw, "We cannot find upload file inside file field")
 		log.Print(err)
@@ -43,6 +47,12 @@ func uploadImageHandler(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	defer multiPartFile.Close()
+
+	contentType := info.Header.Get("Content-Type")
+	if !isImageContentType(contentType) {
+		ErrorResponse(rw, fmt.Sprintf("Wrong content type: %s", contentType))
+		return;
+	}
 
 	buff, err := ioutil.ReadAll(multiPartFile)
 	imageBox, err := NewImageFromByteSlice(buff)
