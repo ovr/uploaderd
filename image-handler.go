@@ -15,7 +15,7 @@ func isImageContentType(contentType string) bool {
 }
 
 type ImagePostHandler struct {
-	iris.HandlerFunc
+
 }
 
 func (m ImagePostHandler) Serve(ctx *iris.Context) {

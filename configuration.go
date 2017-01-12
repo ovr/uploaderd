@@ -24,6 +24,10 @@ type S3Config struct {
 	Bucket    string `json:"bucket"`
 }
 
+type JWTConfig struct {
+	SecretKey string `json:"secret_key"`
+}
+
 type CruftFlakeConfig struct {
 	Uri string `json:"uri"`
 }
@@ -32,6 +36,7 @@ type Configuration struct {
 	DB         DataBaseConfig      `json:"db"`
 	S3         S3Config      `json:"s3"`
 	CruftFlake CruftFlakeConfig `json:"cruftflake"`
+	JWT        JWTConfig `json:"jwt"`
 }
 
 func (this *Configuration) Init(configFile string) {

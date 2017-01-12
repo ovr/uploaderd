@@ -81,6 +81,11 @@ func main() {
 	go startUploader(uploadThumbnailChannel, configuration.S3);
 	go startUploader(uploadOriginalChannel, configuration.S3);
 
-	iris.Handle("POST", "/v1/upload/image", ImagePostHandler{});
-	iris.Listen(":8989")
+	api := iris.New()
+
+	api.Use(createJWTMiddelWare(configuration.JWT))
+
+	api.Handle("POST", "/v1/upload/image", ImagePostHandler{});
+
+	api.Listen(":8989")
 }

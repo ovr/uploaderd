@@ -16,5 +16,8 @@
   },
   "cruftflake": {
     "uri": ""
+  },
+  "jwt": {
+    "secret_key": ""
   }
 }
