@@ -78,6 +78,10 @@ type ImageUploadTask struct {
 var (
 	resizeImageDimmention []ImageDim = []ImageDim {
 		ImageDim {
+			Width: 180,
+			Height: 180,
+		},
+		ImageDim {
 			Width: 100,
 			Height: 100,
 		},
