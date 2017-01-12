@@ -10,6 +10,8 @@ import (
 	"gopkg.in/gographics/imagick.v3/imagick" // v3 for 7+
 	zmq "github.com/pebbe/zmq4"
 	"strconv"
+	"crypto/md5"
+	"encoding/hex"
 )
 
 type ErrorJson struct {
@@ -48,10 +50,21 @@ func uploadImageHandler(rw http.ResponseWriter, req *http.Request) {
 
 	imageBox.FixOrientation()
 
+	width := imageBox.Width;
+	height := imageBox.Height;
+	imageBlob := imageBox.GetImageBlob();
+
+
+	hasher := md5.New()
+	hasher.Write(imageBlob)
+	hash := hex.EncodeToString(hasher.Sum(nil))
+
+	hashPathPart := hash[0:2] + "/" + hash[2:4] + "/";
+
 	// Upload original file
 	uploadOriginalChannel <- ImageUploadTask{
-		Buffer: imageBox.GetImageBlob(),
-		Path: "orig/1.jpg",
+		Buffer: imageBlob,
+		Path: "orig/" + hashPathPart + fmt.Sprintf("%dx%d.jpg", width, height),
 	}
 
 	for _, imgDim := range resizeImageDimmention {
@@ -62,7 +75,7 @@ func uploadImageHandler(rw http.ResponseWriter, req *http.Request) {
 
 		uploadThumbnailChannel <- ImageUploadTask{
 			Buffer: imageBox.GetImageBlob(),
-			Path: fmt.Sprintf("photos/%dx%d.jpg", imgDim.Width, imgDim.Height),
+			Path: "photos/" + hashPathPart + fmt.Sprintf("%dx%d.jpg", imgDim.Width, imgDim.Height),
 		}
 	}
 
