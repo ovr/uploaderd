@@ -62,7 +62,7 @@ func uploadImageHandler(rw http.ResponseWriter, req *http.Request) {
 
 		uploadThumbnailChannel <- ImageUploadTask{
 			Buffer: imageBox.GetImageBlob(),
-			Path: fmt.Sprintf("photos/%sx%s.jpg", imgDim.Width, imgDim.Height),
+			Path: fmt.Sprintf("photos/%dx%d.jpg", imgDim.Width, imgDim.Height),
 		}
 	}
 
