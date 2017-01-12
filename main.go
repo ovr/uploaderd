@@ -55,9 +55,14 @@ func uploadImageHandler(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	buff, err := ioutil.ReadAll(multiPartFile)
+	if err != nil {
+		ErrorResponse(rw, "Cannot read file, it's not correct")
+		log.Print(err)
+	}
+
 	imageBox, err := NewImageFromByteSlice(buff)
 	if err != nil {
-		ErrorResponse(rw, "Upload file is not correct")
+		ErrorResponse(rw, "Uploaded Image is not correct")
 		log.Print(err)
 
 		return;
