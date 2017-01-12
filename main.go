@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"crypto/md5"
 	"encoding/hex"
+	"log"
 )
 
 type ErrorJson struct {
@@ -43,7 +44,10 @@ func uploadImageHandler(rw http.ResponseWriter, req *http.Request) {
 	buff, err := ioutil.ReadAll(multiPartFile)
 	imageBox, err := NewImageFromByteSlice(buff)
 	if err != nil {
-		panic(err)
+		ErrorResponse(rw, "Upload file is not correct")
+		log.Print(err)
+
+		return;
 	}
 
 	defer imageBox.Destroy();
