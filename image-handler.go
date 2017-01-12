@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"github.com/kataras/iris"
 	"net/http"
+	"github.com/dgrijalva/jwt-go"
+	"encoding/json"
 )
 
 func isImageContentType(contentType string) bool {
@@ -73,6 +75,10 @@ func (m ImagePostHandler) Serve(ctx *iris.Context) {
 	height := imageBox.Height;
 	imageBlob := imageBox.GetImageBlob();
 
+	token := ctx.Get("jwt").(*jwt.Token)
+	uid, _ := token.Claims.(jwt.MapClaims)["uid"].(json.Number).Int64()
+
+	photoId := generateUUID(zmqClient);
 
 	hasher := md5.New()
 	hasher.Write(imageBlob)
@@ -83,7 +89,7 @@ func (m ImagePostHandler) Serve(ctx *iris.Context) {
 	// Upload original file
 	uploadOriginalChannel <- ImageUploadTask{
 		Buffer: imageBlob,
-		Path: "orig/" + hashPathPart + fmt.Sprintf("%dx%d.jpg", width, height),
+		Path: "orig/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", width, height, uid, photoId),
 	}
 
 	for _, imgDim := range resizeImageDimmention {
@@ -94,11 +100,9 @@ func (m ImagePostHandler) Serve(ctx *iris.Context) {
 
 		uploadThumbnailChannel <- ImageUploadTask{
 			Buffer: imageBox.GetImageBlob(),
-			Path: "photos/" + hashPathPart + fmt.Sprintf("%dx%d.jpg", imgDim.Width, imgDim.Height),
+			Path: "photos/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", width, height, uid, photoId),
 		}
 	}
-
-	photoId := generateUUID(zmqClient);
 
 	ctx.JSON(
 		http.StatusOK,
