@@ -19,6 +19,11 @@ type ErrorJson struct {
 	Error map[string]string `json:"error"`
 }
 
+type ImageJson struct {
+	Id uint64 `json:"id"`
+}
+
+
 func ErrorResponse(rw http.ResponseWriter, message string, args ...interface{}) {
 	data := &ErrorJson{make(map[string]string)}
 	data.Error["message"] = fmt.Sprintf(message, args...)
@@ -26,6 +31,12 @@ func ErrorResponse(rw http.ResponseWriter, message string, args ...interface{}) 
 
 	rw.Write(resp)
 	//http.Error(rw, "Internal Server Error", http.StatusInternalServerError)
+}
+
+func SuccessResponse(rw http.ResponseWriter, result interface{}) {
+	resp, _ := json.Marshal(result)
+
+	rw.Write(resp)
 }
 
 type ImageDim struct {
@@ -101,7 +112,15 @@ func uploadImageHandler(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	ErrorResponse(rw, imageBox.GetImageFormat())
+	photoId := generateUUID(zmqClient);
+
+
+	SuccessResponse(
+		rw,
+		&ImageJson{
+			Id: photoId,
+		},
+	)
 }
 
 type ImageUploadTask struct {
@@ -109,31 +128,6 @@ type ImageUploadTask struct {
 	Buffer []byte
 	Path string
 }
-
-var (
-	resizeImageDimmention []ImageDim = []ImageDim {
-		ImageDim {
-			Width: 180,
-			Height: 180,
-		},
-		ImageDim {
-			Width: 100,
-			Height: 100,
-		},
-		ImageDim {
-			Width: 75,
-			Height: 75,
-		},
-		ImageDim {
-			Width: 50,
-			Height: 50,
-		},
-	}
-
-	// upload to S3 channel
-	uploadThumbnailChannel chan ImageUploadTask
-	uploadOriginalChannel chan ImageUploadTask
-)
 
 func tryUUID(client *zmq.Socket) (uint64, error) {
 	_, err := client.SendMessage("GEN");
@@ -165,12 +159,41 @@ func generateUUID(client *zmq.Socket) (uint64)  {
 	panic("Cannot generate UUID after N tries")
 }
 
+
+var (
+	resizeImageDimmention []ImageDim = []ImageDim {
+		ImageDim {
+			Width: 180,
+			Height: 180,
+		},
+		ImageDim {
+			Width: 100,
+			Height: 100,
+		},
+		ImageDim {
+			Width: 75,
+			Height: 75,
+		},
+		ImageDim {
+			Width: 50,
+			Height: 50,
+		},
+	}
+
+	// upload to S3 channel
+	uploadThumbnailChannel chan ImageUploadTask
+	uploadOriginalChannel chan ImageUploadTask
+
+	// tmp workaround @todo
+	zmqClient *zmq.Socket
+)
+
 func main() {
 	configuration := &Configuration{};
 	configuration.Init("./config.json")
 
-	client, _ := zmq.NewSocket(zmq.REQ)
-	client.Connect(configuration.CruftFlake.Uri)
+	zmqClient, _ = zmq.NewSocket(zmq.REQ)
+	zmqClient.Connect(configuration.CruftFlake.Uri)
 
 	imagick.Initialize() // LOAD ONLY ONCE, because DEAD LOCK!! @ovr
 	defer imagick.Terminate()
