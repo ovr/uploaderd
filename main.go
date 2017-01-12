@@ -36,7 +36,10 @@ type ImageDim struct {
 func uploadImageHandler(rw http.ResponseWriter, req *http.Request) {
 	multiPartFile, _, err := req.FormFile("file")
 	if err != nil {
-		panic(err)
+		ErrorResponse(rw, "We cannot find upload file inside file field")
+		log.Print(err)
+
+		return;
 	}
 
 	defer multiPartFile.Close()
