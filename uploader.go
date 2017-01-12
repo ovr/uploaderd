@@ -30,7 +30,7 @@ func startUploader(channel chan ImageUploadTask, config S3Config) {
 
 	for {
 		select {
-		case task := <- uploadChannel:
+		case task := <- channel:
 			log.Print("[Event] New Image to Upload ", len(task.Buffer));
 
 			byteReader := bytes.NewReader(task.Buffer);

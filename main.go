@@ -49,7 +49,7 @@ func uploadImageHandler(rw http.ResponseWriter, req *http.Request) {
 	imageBox.FixOrientation()
 
 	// Upload original file
-	uploadChannel <- ImageUploadTask{
+	uploadOriginalChannel <- ImageUploadTask{
 		Buffer: imageBox.GetImageBlob(),
 		Path: "orig/1.jpg",
 	}
@@ -60,7 +60,7 @@ func uploadImageHandler(rw http.ResponseWriter, req *http.Request) {
 			panic(err)
 		}
 
-		uploadChannel <- ImageUploadTask{
+		uploadThumbnailChannel <- ImageUploadTask{
 			Buffer: imageBox.GetImageBlob(),
 			Path: fmt.Sprintf("photos/%sx%s.jpg", imgDim.Width, imgDim.Height),
 		}
@@ -92,7 +92,8 @@ var (
 	}
 
 	// upload to S3 channel
-	uploadChannel chan ImageUploadTask
+	uploadThumbnailChannel chan ImageUploadTask
+	uploadOriginalChannel chan ImageUploadTask
 )
 
 func tryUUID(client *zmq.Socket) (uint64, error) {
@@ -149,9 +150,11 @@ func main() {
 		}
 	}
 
-	uploadChannel = make(chan ImageUploadTask, 500); // Async channel but with small buffer 20 <= X <= THINK
+	uploadThumbnailChannel = make(chan ImageUploadTask, 500); // Async channel but with small buffer 20 <= X <= THINK
+	uploadOriginalChannel = make(chan ImageUploadTask, 1000); // Async channel but with small buffer 20 <= X <= THINK
 
-	go startUploader(uploadChannel, configuration.S3);
+	go startUploader(uploadThumbnailChannel, configuration.S3);
+	go startUploader(uploadOriginalChannel, configuration.S3);
 
 	r.ListenAndServe(":8989", errorHandler)
 }
