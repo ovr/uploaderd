@@ -10,14 +10,14 @@ import (
 	"bytes"
 )
 
-func startUploader(channel chan ImageUploadTask) {
+func startUploader(channel chan ImageUploadTask, config S3Config) {
 
 	sess, err := session.NewSession(
 		&aws.Config{
-			Region: aws.String(""),
+			Region: aws.String(config.Region),
 			Credentials: credentials.NewStaticCredentials(
-				"",
-				"",
+				config.AccessKey,
+				config.SecretKey,
 				"",
 			),
 		},
@@ -37,7 +37,7 @@ func startUploader(channel chan ImageUploadTask) {
 
 			_, err := svc.PutObject(
 				&s3.PutObjectInput{
-					Bucket: aws.String(""),
+					Bucket: aws.String(config.Bucket),
 					Key: &task.Path,
 					Body: byteReader,
 					ContentLength: aws.Int64(byteReader.Size()),

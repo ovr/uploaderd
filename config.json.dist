@@ -1,0 +1,20 @@
+{
+  "db": {
+    "dialect": "mysql",
+    "uri": "",
+    "max-idle-connections": 1,
+    "max-open-connections": 10,
+    "log": true,
+    "threads": 4,
+    "limit": 500
+  },
+  "s3": {
+    "access_key": "",
+    "secret_key": "",
+    "region": "",
+    "bucket": "",
+  },
+  "cruftflake": {
+    "uri": ""
+  }
+}

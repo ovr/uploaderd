@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"gopkg.in/gographics/imagick.v3/imagick" // v3 for 7+
 	zmq "github.com/pebbe/zmq4"
-	"log"
 	"strconv"
 )
 
@@ -127,13 +126,11 @@ func generateUUID(client *zmq.Socket) (uint64)  {
 }
 
 func main() {
+	configuration := &Configuration{};
+	configuration.Init("./config.json")
+
 	client, _ := zmq.NewSocket(zmq.REQ)
-	client.Connect("tcp://127.0.0.1:5599")
-
-	for {
-		log.Print(generateUUID(client))
-	}
-
+	client.Connect(configuration.CruftFlake.Uri)
 
 	imagick.Initialize() // LOAD ONLY ONCE, because DEAD LOCK!! @ovr
 	defer imagick.Terminate()
@@ -154,7 +151,7 @@ func main() {
 
 	uploadChannel = make(chan ImageUploadTask, 500); // Async channel but with small buffer 20 <= X <= THINK
 
-	go startUploader(uploadChannel);
+	go startUploader(uploadChannel, configuration.S3);
 
 	r.ListenAndServe(":8989", errorHandler)
 }
