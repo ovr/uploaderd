@@ -2,8 +2,10 @@ package main
 
 import (
 	"gopkg.in/gographics/imagick.v3/imagick" // v3 for 7+
+	_ "github.com/go-sql-driver/mysql"
 	zmq "github.com/pebbe/zmq4"
 	"github.com/kataras/iris"
+	"github.com/jinzhu/gorm"
 	"github.com/iris-contrib/middleware/pprof"
 	"github.com/iris-contrib/middleware/recovery"
 	"github.com/iris-contrib/middleware/logger"
@@ -81,6 +83,17 @@ func main() {
 	uploadThumbnailChannel = make(chan ImageUploadTask, 500); // Async channel but with small buffer 20 <= X <= THINK
 	uploadOriginalChannel = make(chan ImageUploadTask, 1000); // Async channel but with small buffer 20 <= X <= THINK
 
+
+	db, err := gorm.Open(configuration.DB.Dialect, configuration.DB.Uri)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	db.LogMode(configuration.DB.ShowLog)
+	db.DB().SetMaxIdleConns(configuration.DB.MaxIdleConnections)
+	db.DB().SetMaxOpenConns(configuration.DB.MaxOpenConnections)
+
 	go startUploader(uploadThumbnailChannel, configuration.S3);
 	go startUploader(uploadOriginalChannel, configuration.S3);
 
@@ -91,7 +104,14 @@ func main() {
 
 	pprof := pprof.New()
 	api.Get("/debug/pprof/*action", pprof)
-	api.Handle("POST", "/v1/upload/image", createJWTMiddelWare(configuration.JWT), ImagePostHandler{});
+	api.Handle(
+		"POST",
+		"/v1/upload/image",
+		createJWTMiddelWare(configuration.JWT),
+		ImagePostHandler{
+			DB: db,
+		},
+	);
 
 	api.Listen(":8989")
 }

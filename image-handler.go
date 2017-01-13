@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"github.com/dgrijalva/jwt-go"
 	"encoding/json"
+	"github.com/jinzhu/gorm"
 )
 
 func isImageContentType(contentType string) bool {
@@ -17,7 +18,7 @@ func isImageContentType(contentType string) bool {
 }
 
 type ImagePostHandler struct {
-
+	DB *gorm.DB
 }
 
 func (m ImagePostHandler) Serve(ctx *iris.Context) {
