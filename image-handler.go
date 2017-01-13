@@ -11,6 +11,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"encoding/json"
 	"github.com/jinzhu/gorm"
+	"time"
 )
 
 func isImageContentType(contentType string) bool {
@@ -21,7 +22,7 @@ type ImagePostHandler struct {
 	DB *gorm.DB
 }
 
-func (m ImagePostHandler) Serve(ctx *iris.Context) {
+func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 	multiPartFile, info, err := ctx.Request.FormFile("file")
 	if err != nil {
@@ -67,26 +68,35 @@ func (m ImagePostHandler) Serve(ctx *iris.Context) {
 		log.Print(err)
 		return;
 	}
-
 	defer imageBox.Destroy();
 
 	width := imageBox.Width;
 	height := imageBox.Height;
-
 	token := ctx.Get("jwt").(*jwt.Token)
 	uid, _ := token.Claims.(jwt.MapClaims)["uid"].(json.Number).Int64()
-
-	photoId := generateUUID(zmqClient);
 
 	hasher := md5.New()
 	hasher.Write(buff)
 	hash := hex.EncodeToString(hasher.Sum(nil))
-
 	hashPathPart := hash[0:2] + "/" + hash[2:4] + "/";
+
+	photoId := generateUUID(zmqClient);
+	photo := Photo{
+		Id:photoId,
+		Added:time.Now(),
+		FileName: hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", 500, 500, uid, photoId),
+		width: 500,
+		Height: 500,
+		UserId: uint64(uid),
+		ThumbVersion: 0,
+		ModApproved: false,
+		Hidden: false,
+	}
+	this.DB.Save(photo);
 
 	uploadOriginalChannel <- ImageUploadTask{
 		Buffer: buff,
-		Path: "orig/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", width, height, uid, photoId),
+		Path:   "orig/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", width, height, uid, photoId),
 	}
 
 	imageBox.FixOrientation()
@@ -94,7 +104,7 @@ func (m ImagePostHandler) Serve(ctx *iris.Context) {
 
 	uploadOriginalChannel <- ImageUploadTask{
 		Buffer: imageBox.GetImageBlob(),
-		Path: "photo/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", 500, 500, uid, photoId),
+		Path:   "photo/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", 500, 500, uid, photoId),
 	}
 
 	for _, imgDim := range resizeImageDimmention {
@@ -105,7 +115,7 @@ func (m ImagePostHandler) Serve(ctx *iris.Context) {
 
 		uploadThumbnailChannel <- ImageUploadTask{
 			Buffer: imageBox.GetImageBlob(),
-			Path: "photos/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", width, height, uid, photoId),
+			Path:   "photos/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", width, height, uid, photoId),
 		}
 	}
 
