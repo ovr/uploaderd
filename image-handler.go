@@ -69,11 +69,8 @@ func (m ImagePostHandler) Serve(ctx *iris.Context) {
 
 	defer imageBox.Destroy();
 
-	imageBox.FixOrientation()
-
 	width := imageBox.Width;
 	height := imageBox.Height;
-	imageBlob := imageBox.GetImageBlob();
 
 	token := ctx.Get("jwt").(*jwt.Token)
 	uid, _ := token.Claims.(jwt.MapClaims)["uid"].(json.Number).Int64()
@@ -81,15 +78,22 @@ func (m ImagePostHandler) Serve(ctx *iris.Context) {
 	photoId := generateUUID(zmqClient);
 
 	hasher := md5.New()
-	hasher.Write(imageBlob)
+	hasher.Write(buff)
 	hash := hex.EncodeToString(hasher.Sum(nil))
 
 	hashPathPart := hash[0:2] + "/" + hash[2:4] + "/";
 
-	// Upload original file
 	uploadOriginalChannel <- ImageUploadTask{
-		Buffer: imageBlob,
+		Buffer: buff,
 		Path: "orig/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", width, height, uid, photoId),
+	}
+
+	imageBox.FixOrientation()
+	imageBox.ResizeImage(500, 500)
+
+	uploadOriginalChannel <- ImageUploadTask{
+		Buffer: imageBox.GetImageBlob(),
+		Path: "photo/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", 500, 500, uid, photoId),
 	}
 
 	for _, imgDim := range resizeImageDimmention {
