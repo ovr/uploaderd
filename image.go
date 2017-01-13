@@ -67,8 +67,28 @@ func (this *ImageBox) CropImage(width, height uint, x, y int) error {
 	return this.mw.CropImage(width, height, x, y)
 }
 
+func (this *ImageBox) SetImageFormat(format string) error {
+	return this.mw.SetImageFormat(format)
+}
+
+func (this *ImageBox) SetImageInterpolateMethod(method imagick.PixelInterpolateMethod) error {
+	return this.mw.SetImageInterpolateMethod(method)
+}
+
+func (this *ImageBox) SetImageInterlaceScheme(interlace imagick.InterlaceType) error {
+	return this.mw.SetImageInterlaceScheme(interlace)
+}
+
+func (this *ImageBox) SetImageCompression(compression imagick.CompressionType) error {
+	return this.mw.SetImageCompression(compression)
+}
+
 func (this *ImageBox) SetImageCompressionQuality(quality uint) error {
 	return this.mw.SetImageCompressionQuality(quality)
+}
+
+func (this *ImageBox) StripImage() error {
+	return this.mw.StripImage()
 }
 
 func (this *ImageBox) NormalizeImage() error {
@@ -84,7 +104,10 @@ func (this *ImageBox) ThumbnailImage(width, height uint) error {
 }
 
 func (this *ImageBox) ResizeImage(width, height uint) error {
-	return this.mw.ResizeImage(width, height, imagick.FILTER_QUADRATIC)
+	this.Width = uint64(width);
+	this.Height = uint64(height);
+
+	return this.mw.ResizeImage(width, height, imagick.FILTER_UNDEFINED)
 }
 
 func (this *ImageBox) Destroy() {

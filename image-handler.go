@@ -12,6 +12,13 @@ import (
 	"encoding/json"
 	"github.com/jinzhu/gorm"
 	"time"
+	"gopkg.in/gographics/imagick.v3/imagick"
+)
+
+const (
+	// 1280/720
+	MAX_BIG_PHOTO_WIDHT = 1280
+	MAX_BIG_PHOTO_HEIGHT = 720
 )
 
 func isImageContentType(contentType string) bool {
@@ -70,8 +77,6 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 	}
 	defer imageBox.Destroy();
 
-	width := imageBox.Width;
-	height := imageBox.Height;
 	token := ctx.Get("jwt").(*jwt.Token)
 	uid, _ := token.Claims.(jwt.MapClaims)["uid"].(json.Number).Int64()
 
@@ -81,12 +86,48 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 	hashPathPart := hash[0:2] + "/" + hash[2:4] + "/";
 
 	photoId := generateUUID(zmqClient);
+
+	uploadOriginalChannel <- ImageUploadTask{
+		Buffer: buff,
+		Path:   "orig/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", imageBox.Width, imageBox.Height, uid, photoId),
+	}
+
+	imageBox.SetImageFormat("jpeg")
+	imageBox.SetImageCompression(imagick.COMPRESSION_JPEG)
+	imageBox.SetImageCompressionQuality(85)
+
+	err = imageBox.SetImageInterlaceScheme(imagick.INTERLACE_JPEG);
+	if err != nil {
+		log.Print(err)
+	}
+
+	err = imageBox.SetImageInterpolateMethod(imagick.INTERPOLATE_PIXEL_AVERAGE16);
+	if err != nil {
+		log.Print(err)
+	}
+
+	if (imageBox.Width > imageBox.Height) {
+		if (imageBox.Width > MAX_BIG_PHOTO_WIDHT) {
+			proportion := float64(imageBox.Height) / float64(imageBox.Width);
+			imageBox.ResizeImage(MAX_BIG_PHOTO_WIDHT, uint(MAX_BIG_PHOTO_WIDHT * proportion))
+		}
+	} else {
+		if (imageBox.Height > MAX_BIG_PHOTO_HEIGHT) {
+			proportion := float64(imageBox.Width) / float64(imageBox.Height);
+			imageBox.ResizeImage(uint(MAX_BIG_PHOTO_HEIGHT * proportion), MAX_BIG_PHOTO_HEIGHT)
+		}
+	}
+
+	imageBox.StripImage();
+	imageBox.NormalizeImage();
+	imageBox.FixOrientation();
+
 	photo := Photo{
 		Id:photoId,
 		Added:time.Now(),
-		FileName: hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", 500, 500, uid, photoId),
-		Width: 500,
-		Height: 500,
+		FileName: hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", imageBox.Width, imageBox.Height, uid, photoId),
+		Width: imageBox.Width,
+		Height: imageBox.Height,
 		UserId: uint64(uid),
 		ThumbVersion: 0,
 		ModApproved: false,
@@ -95,23 +136,13 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 	go this.DB.Save(photo);
 
 	uploadOriginalChannel <- ImageUploadTask{
-		Buffer: buff,
-		Path:   "orig/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", width, height, uid, photoId),
-	}
-
-	imageBox.SetImageCompressionQuality(80)
-	imageBox.FixOrientation()
-	imageBox.ResizeImage(500, 500)
-
-	uploadOriginalChannel <- ImageUploadTask{
 		Buffer: imageBox.GetImageBlob(),
-		Path:   "photo/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", 500, 500, uid, photoId),
+		Path:   "photo/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", imageBox.Width, imageBox.Height, uid, photoId),
 	}
+
+	imageBox.UnsharpMaskImage(0, 0.5, 1, 0.05);
 
 	for _, imgDim := range resizeImageDimmention {
-		imageBox.NormalizeImage();
-		imageBox.UnsharpMaskImage(0, 0.5, 1, 0.05);
-
 		err = imageBox.ThumbnailImage(imgDim.Width, imgDim.Height);
 		if err != nil {
 			panic(err)

@@ -12,8 +12,8 @@ type Photo struct {
 	AlbumId      *uint64 `gorm:"column:aid" json:"aid"`
 	Description  string `gorm:"column:description" json:"-"`
 	ModApproved  bool `gorm:"column:mod_approved" json:"-"`
-	Height       uint `json:"height"`
-	Width        uint `json:"width"`
+	Height       uint64 `json:"height"`
+	Width        uint64 `json:"width"`
 	ISO2         uint `gorm:"column:country_iso2" json:"-"`
 	CONT         uint `gorm:"column:cont" json:"-"`
 	ThumbVersion uint16 `gorm:"column:thumb_version" json:"version"`
