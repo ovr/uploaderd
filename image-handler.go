@@ -85,14 +85,14 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 		Id:photoId,
 		Added:time.Now(),
 		FileName: hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", 500, 500, uid, photoId),
-		width: 500,
+		Width: 500,
 		Height: 500,
 		UserId: uint64(uid),
 		ThumbVersion: 0,
 		ModApproved: false,
 		Hidden: false,
 	}
-	this.DB.Save(photo);
+	go this.DB.Save(photo);
 
 	uploadOriginalChannel <- ImageUploadTask{
 		Buffer: buff,
@@ -121,8 +121,6 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 	ctx.JSON(
 		http.StatusOK,
-		&ImageJson{
-			Id: photoId,
-		},
+		photo.getApiData(),
 	)
 }

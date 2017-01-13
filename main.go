@@ -27,10 +27,6 @@ func newErrorJson(message string) ErrorJson {
 	}
 }
 
-type ImageJson struct {
-	Id uint64 `json:"id"`
-}
-
 type ImageDim struct {
 	Width uint
 	Height uint

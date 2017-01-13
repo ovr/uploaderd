@@ -5,19 +5,24 @@ import (
 )
 
 type Photo struct {
-	Id           uint64 `gorm:"column:photo_id"`
-	FileName     string `gorm:"column:file_name"`
-	UserId       uint64 `gorm:"column:user_id"`
-	Description  string `gorm:"column:description"`
-	Added        time.Time `gorm:"column:added"`
-	AlbumId      *uint64 `gorm:"column:aid"`
-	ModApproved  bool `gorm:"column:mod_approved"`
-	Height       uint
-	width        uint
-	ISO2         uint `gorm:"column:country_iso2"`
-	CONT         uint `gorm:"column:cont"`
-	ThumbVersion uint16 `gorm:"column:thumb_version"`
-	ThumbParams  string `gorm:"column:thumb_params"`
-	HM64         string `gorm:"column:hm64"`
-	Hidden       bool `gorm:"column:hidden"`
+	Id           uint64 `gorm:"column:photo_id" json:"id"`
+	Added        time.Time `gorm:"column:added" json:"created"`
+	FileName     string `gorm:"column:file_name" json:"path"`
+	UserId       uint64 `gorm:"column:user_id" json:"uid"`
+	AlbumId      *uint64 `gorm:"column:aid" json:"aid"`
+	Description  string `gorm:"column:description" json:"-"`
+	ModApproved  bool `gorm:"column:mod_approved" json:"-"`
+	Height       uint `json:"height"`
+	Width        uint `json:"width"`
+	ISO2         uint `gorm:"column:country_iso2" json:"-"`
+	CONT         uint `gorm:"column:cont" json:"-"`
+	ThumbVersion uint16 `gorm:"column:thumb_version" json:"version"`
+	ThumbParams  string `gorm:"column:thumb_params" json:"-"`
+	HM64         string `gorm:"column:hm64" json:"-"`
+	Hidden       bool `gorm:"column:hidden" json:"-"`
+}
+
+// @todo Will be used in the feature
+func (this Photo) getApiData() Photo {
+	return this;
 }
