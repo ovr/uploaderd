@@ -4,6 +4,7 @@ import (
 	"gopkg.in/gographics/imagick.v3/imagick" // v3 for 7+
 	zmq "github.com/pebbe/zmq4"
 	"github.com/kataras/iris"
+	"github.com/iris-contrib/middleware/pprof"
 	"github.com/iris-contrib/middleware/recovery"
 	"github.com/iris-contrib/middleware/logger"
 )
@@ -87,9 +88,10 @@ func main() {
 
 	api.Use(logger.New())
 	api.Use(recovery.Handler)
-	api.Use(createJWTMiddelWare(configuration.JWT))
 
-	api.Handle("POST", "/v1/upload/image", ImagePostHandler{});
+	pprof := pprof.New()
+	api.Get("/debug/pprof/*action", pprof)
+	api.Handle("POST", "/v1/upload/image", createJWTMiddelWare(configuration.JWT), ImagePostHandler{});
 
 	api.Listen(":8989")
 }
