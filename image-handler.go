@@ -97,7 +97,7 @@ func (m ImagePostHandler) Serve(ctx *iris.Context) {
 	}
 
 	for _, imgDim := range resizeImageDimmention {
-		err = imageBox.ResizeImage(imgDim.Width, imgDim.Height);
+		err = imageBox.ThumbnailImage(imgDim.Width, imgDim.Height);
 		if err != nil {
 			panic(err)
 		}

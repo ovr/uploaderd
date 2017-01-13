@@ -63,6 +63,10 @@ func (this *ImageBox) FixOrientation() {
 	}
 }
 
+func (this *ImageBox) ThumbnailImage(width, height uint) error {
+	return this.mw.ThumbnailImage(width, height)
+}
+
 func (this *ImageBox) ResizeImage(width, height uint) error {
 	return this.mw.ResizeImage(width, height, imagick.FILTER_QUADRATIC)
 }
