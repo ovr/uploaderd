@@ -103,6 +103,10 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 	imageBox.SetImageCompression(imagick.COMPRESSION_JPEG)
 	imageBox.SetImageCompressionQuality(85)
 
+	imageBox.StripImage();
+	imageBox.NormalizeImage();
+	imageBox.FixOrientation();
+
 	err = imageBox.SetImageInterlaceScheme(imagick.INTERLACE_JPEG);
 	if err != nil {
 		log.Print(err)
@@ -124,13 +128,6 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 			imageBox.ResizeImage(uint(MAX_BIG_PHOTO_HEIGHT * proportion), MAX_BIG_PHOTO_HEIGHT)
 		}
 	}
-
-	//imageBox.StripImage();
-	//imageBox.NormalizeImage();
-	//imageBox.FixOrientation();
-
-	log.Print(imageBox.GetImageInterlaceMethod());
-	log.Print(imageBox.GetImageInterlaceScheme());
 
 	photo := Photo{
 		Id:photoId,
