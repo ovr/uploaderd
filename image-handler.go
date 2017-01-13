@@ -99,6 +99,7 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 		Path:   "orig/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", width, height, uid, photoId),
 	}
 
+	imageBox.SetImageCompressionQuality(80)
 	imageBox.FixOrientation()
 	imageBox.ResizeImage(500, 500)
 
@@ -108,6 +109,9 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 	}
 
 	for _, imgDim := range resizeImageDimmention {
+		imageBox.NormalizeImage();
+		imageBox.UnsharpMaskImage(0, 0.5, 1, 0.05);
+
 		err = imageBox.ThumbnailImage(imgDim.Width, imgDim.Height);
 		if err != nil {
 			panic(err)
@@ -115,7 +119,7 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 		uploadThumbnailChannel <- ImageUploadTask{
 			Buffer: imageBox.GetImageBlob(),
-			Path:   "photos/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", width, height, uid, photoId),
+			Path:   "photos/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", imgDim.Width, imgDim.Height, uid, photoId),
 		}
 	}
 

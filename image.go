@@ -4,7 +4,7 @@ import "gopkg.in/gographics/imagick.v3/imagick" // v3 for 7+
 
 type ImageBox struct {
 	mw            *imagick.MagickWand
-	Width, Height uint
+	Width, Height uint64
 }
 
 func NewImageFromByteSlice(buff []byte) (*ImageBox, error) {
@@ -20,8 +20,8 @@ func NewImageFromByteSlice(buff []byte) (*ImageBox, error) {
 
 	imgBox := &ImageBox{
 		mw:     mw,
-		Width:  mw.GetImageWidth(),
-		Height: mw.GetImageHeight(),
+		Width:  uint64(mw.GetImageWidth()),
+		Height: uint64(mw.GetImageHeight()),
 	};
 	return imgBox, nil
 }
@@ -61,6 +61,22 @@ func (this *ImageBox) FixOrientation() {
 		this.mw.RotateImage(imagick.NewPixelWand(), -90)
 		break
 	}
+}
+
+func (this *ImageBox) CropImage(width, height uint, x, y int) error {
+	return this.mw.CropImage(width, height, x, y)
+}
+
+func (this *ImageBox) SetImageCompressionQuality(quality uint) error {
+	return this.mw.SetImageCompressionQuality(quality)
+}
+
+func (this *ImageBox) NormalizeImage() error {
+	return this.mw.NormalizeImage()
+}
+
+func (this *ImageBox) UnsharpMaskImage(radius, sigma, amount, threshold float64) error {
+	return this.mw.UnsharpMaskImage(radius, sigma, amount, threshold)
 }
 
 func (this *ImageBox) ThumbnailImage(width, height uint) error {
