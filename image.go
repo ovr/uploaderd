@@ -75,6 +75,14 @@ func (this *ImageBox) SetImageInterpolateMethod(method imagick.PixelInterpolateM
 	return this.mw.SetImageInterpolateMethod(method)
 }
 
+func (this *ImageBox) GetImageInterlaceMethod() imagick.PixelInterpolateMethod {
+	return this.mw.GetImageInterpolateMethod()
+}
+
+func (this *ImageBox) GetImageInterlaceScheme() imagick.InterlaceType {
+	return this.mw.GetImageInterlaceScheme()
+}
+
 func (this *ImageBox) SetImageInterlaceScheme(interlace imagick.InterlaceType) error {
 	return this.mw.SetImageInterlaceScheme(interlace)
 }

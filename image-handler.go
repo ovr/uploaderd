@@ -16,7 +16,14 @@ import (
 )
 
 const (
-	// 1280/720
+	MAX_PHOTO_WIDTH = 6000
+	MAX_PHOTO_HEIGHT = 6000
+
+	// 1920x1080 FULL HD - max original photo size that We store
+	RESIZE_PHOTO_WIDHT = 1920
+	RESIZE_PHOTO_HEIGHT = 1080
+
+	// 1280/720 HD
 	MAX_BIG_PHOTO_WIDHT = 1280
 	MAX_BIG_PHOTO_HEIGHT = 720
 )
@@ -92,7 +99,7 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 		Path:   "orig/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", imageBox.Width, imageBox.Height, uid, photoId),
 	}
 
-	imageBox.SetImageFormat("jpeg")
+	imageBox.SetImageFormat("PJPEG")
 	imageBox.SetImageCompression(imagick.COMPRESSION_JPEG)
 	imageBox.SetImageCompressionQuality(85)
 
@@ -101,7 +108,7 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 		log.Print(err)
 	}
 
-	err = imageBox.SetImageInterpolateMethod(imagick.INTERPOLATE_PIXEL_AVERAGE16);
+	err = imageBox.SetImageInterpolateMethod(imagick.INTERPOLATE_PIXEL_BACKGROUND);
 	if err != nil {
 		log.Print(err)
 	}
@@ -118,9 +125,12 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 		}
 	}
 
-	imageBox.StripImage();
-	imageBox.NormalizeImage();
-	imageBox.FixOrientation();
+	//imageBox.StripImage();
+	//imageBox.NormalizeImage();
+	//imageBox.FixOrientation();
+
+	log.Print(imageBox.GetImageInterlaceMethod());
+	log.Print(imageBox.GetImageInterlaceScheme());
 
 	photo := Photo{
 		Id:photoId,
