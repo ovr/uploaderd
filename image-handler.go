@@ -84,6 +84,14 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 	}
 	defer imageBox.Destroy();
 
+	if imageBox.Width > MAX_PHOTO_WIDTH || imageBox.Height > MAX_PHOTO_HEIGHT {
+		ctx.SetStatusCode(http.StatusBadRequest);
+		ctx.WriteString(
+			fmt.Sprintf("Image is large, max %dx%d", MAX_PHOTO_WIDTH, MAX_PHOTO_HEIGHT),
+		)
+		return;
+	}
+
 	token := ctx.Get("jwt").(*jwt.Token)
 	uid, _ := token.Claims.(jwt.MapClaims)["uid"].(json.Number).Int64()
 
