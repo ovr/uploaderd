@@ -19,8 +19,8 @@ const (
 	MAX_PHOTO_WIDTH = 6000
 	MAX_PHOTO_HEIGHT = 6000
 
-	MIN_PHOTO_WIDTH = 180
-	MIN_PHOTO_HEIGHT = 180
+	MIN_PHOTO_WIDTH = 200
+	MIN_PHOTO_HEIGHT = 200
 
 	// 1920x1080 FULL HD - max original photo size that We store
 	RESIZE_PHOTO_WIDHT = 1920
@@ -168,7 +168,33 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 	imageBox.UnsharpMaskImage(0, 0.5, 1, 0.05);
 
+
+
 	for _, imgDim := range resizeImageDimmention {
+		var minimalSide uint;
+
+		if imageBox.Width > imageBox.Height {
+			minimalSide = uint(imageBox.Height);
+		} else {
+			minimalSide = uint(imageBox.Width);
+		}
+
+		minSidehalf := uint(float64(minimalSide) / 2);
+		half := uint(float64(minSidehalf) / 2);
+
+		x := int(uint(float64(imageBox.Width) / 2) - half);
+		y := int(uint(float64(imageBox.Height) / 2) - half);
+
+		log.Print("minSidehalf=", minSidehalf);
+		log.Print("half=", half);
+		log.Print("x=", x);
+		log.Print("y=", y);
+
+		err = imageBox.CropImage(minSidehalf, minSidehalf, x, y);
+		if err != nil {
+			panic(err)
+		}
+
 		err = imageBox.ThumbnailImage(imgDim.Width, imgDim.Height);
 		if err != nil {
 			panic(err)
