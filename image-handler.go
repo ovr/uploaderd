@@ -19,6 +19,9 @@ const (
 	MAX_PHOTO_WIDTH = 6000
 	MAX_PHOTO_HEIGHT = 6000
 
+	MIN_PHOTO_WIDTH = 180
+	MIN_PHOTO_HEIGHT = 180
+
 	// 1920x1080 FULL HD - max original photo size that We store
 	RESIZE_PHOTO_WIDHT = 1920
 	RESIZE_PHOTO_HEIGHT = 1080
@@ -87,7 +90,15 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 	if imageBox.Width > MAX_PHOTO_WIDTH || imageBox.Height > MAX_PHOTO_HEIGHT {
 		ctx.SetStatusCode(http.StatusBadRequest);
 		ctx.WriteString(
-			fmt.Sprintf("Image is large, max %dx%d", MAX_PHOTO_WIDTH, MAX_PHOTO_HEIGHT),
+			fmt.Sprintf("Image is too large, max %dx%d", MAX_PHOTO_WIDTH, MAX_PHOTO_HEIGHT),
+		)
+		return;
+	}
+
+	if imageBox.Width < MIN_PHOTO_WIDTH || imageBox.Height < MIN_PHOTO_HEIGHT {
+		ctx.SetStatusCode(http.StatusBadRequest);
+		ctx.WriteString(
+			fmt.Sprintf("Image is too small, max %dx%d", MIN_PHOTO_WIDTH, MIN_PHOTO_HEIGHT),
 		)
 		return;
 	}
