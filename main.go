@@ -102,7 +102,7 @@ func main() {
 	api.Get("/debug/pprof/*action", pprof)
 	api.Handle(
 		"POST",
-		"/v1/upload/image",
+		"/v1/image",
 		createJWTMiddelWare(configuration.JWT),
 		ImagePostHandler{
 			DB: db,
