@@ -3,9 +3,17 @@ package main
 import (
 	"strconv"
 	zmq "github.com/pebbe/zmq4"
+	"sync"
+)
+
+var (
+	// todo, @ovr should rewrite this shit!
+	clientMutex sync.Mutex
 )
 
 func tryUUID(client *zmq.Socket) (uint64, error) {
+	clientMutex.Lock()
+
 	_, err := client.SendMessage("GEN");
 	if err != nil {
 		return 0, err
@@ -15,6 +23,8 @@ func tryUUID(client *zmq.Socket) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
+
+	clientMutex.Unlock()
 
 	res, err := strconv.ParseUint(reply[0], 10, 64)
 	if err != nil {
