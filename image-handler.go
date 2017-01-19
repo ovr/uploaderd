@@ -170,6 +170,8 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 	for _, imgDim := range resizeImageDimmention {
 
+		// Image can be horizontal, vertical or square
+		// on square image, it's not needed to crop
 		if imageBox.Width > imageBox.Height {
 			diff := imageBox.Width - imageBox.Height;
 			half := int(float64(diff) / 2);
@@ -180,7 +182,7 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 				half,
 				0,
 			);
-		} else {
+		} else if imageBox.Height > imageBox.Width {
 			diff := imageBox.Height - imageBox.Width;
 			half := int(float64(diff) / 2);
 
