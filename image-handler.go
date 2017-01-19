@@ -79,8 +79,12 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 	imageBox, err := NewImageFromByteSlice(buff)
 	if err != nil {
-		ctx.SetStatusCode(http.StatusBadRequest);
-		ctx.WriteString("Uploaded Image is not correct")
+		ctx.JSON(
+			http.StatusBadRequest,
+			newErrorJson(
+				"Uploaded Image is not correct",
+			),
+		)
 
 		log.Print(err)
 		return;
@@ -88,18 +92,24 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 	defer imageBox.Destroy();
 
 	if imageBox.Width > MAX_PHOTO_WIDTH || imageBox.Height > MAX_PHOTO_HEIGHT {
-		ctx.SetStatusCode(http.StatusBadRequest);
-		ctx.WriteString(
-			fmt.Sprintf("Image is too large, max %dx%d", MAX_PHOTO_WIDTH, MAX_PHOTO_HEIGHT),
+		ctx.JSON(
+			http.StatusBadRequest,
+			newErrorJson(
+				fmt.Sprintf("Image is too large, max %dx%d", MAX_PHOTO_WIDTH, MAX_PHOTO_HEIGHT),
+			),
 		)
+
 		return;
 	}
 
 	if imageBox.Width < MIN_PHOTO_WIDTH || imageBox.Height < MIN_PHOTO_HEIGHT {
-		ctx.SetStatusCode(http.StatusBadRequest);
-		ctx.WriteString(
-			fmt.Sprintf("Image is too small, max %dx%d", MIN_PHOTO_WIDTH, MIN_PHOTO_HEIGHT),
+		ctx.JSON(
+			http.StatusBadRequest,
+			newErrorJson(
+				fmt.Sprintf("Image is too small, max %dx%d", MIN_PHOTO_WIDTH, MIN_PHOTO_HEIGHT),
+			),
 		)
+
 		return;
 	}
 
@@ -128,19 +138,25 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 	err = imageBox.SetImageInterlaceScheme(imagick.INTERLACE_JPEG);
 	if err != nil {
-		ctx.SetStatusCode(http.StatusBadRequest);
-		ctx.WriteString(
-			"Sorry, but We cannot proccess your image",
+		ctx.JSON(
+			http.StatusBadRequest,
+			newErrorJson(
+				"Sorry, but We cannot proccess your image",
+			),
 		)
+
 		return;
 	}
 
 	err = imageBox.SetImageInterpolateMethod(imagick.INTERPOLATE_PIXEL_BACKGROUND);
 	if err != nil {
-		ctx.SetStatusCode(http.StatusBadRequest);
-		ctx.WriteString(
-			"Sorry, but We cannot proccess your image",
+		ctx.JSON(
+			http.StatusBadRequest,
+			newErrorJson(
+				"Sorry, but We cannot proccess your image",
+			),
 		)
+
 		return;
 	}
 
@@ -204,10 +220,13 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 		err = imageBox.ThumbnailImage(imgDim.Width, imgDim.Height);
 		if err != nil {
-			ctx.SetStatusCode(http.StatusBadRequest);
-			ctx.WriteString(
-				"Sorry, but We cannot proccess your image",
+			ctx.JSON(
+				http.StatusBadRequest,
+				newErrorJson(
+					"Sorry, but We cannot proccess your image",
+				),
 			)
+
 			return;
 		}
 
