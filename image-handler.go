@@ -200,22 +200,45 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 			diff := imageBox.Width - imageBox.Height;
 			half := int(float64(diff) / 2);
 
-			imageBox.CropImage(
+			err = imageBox.CropImage(
 				uint(imageBox.Height),
 				uint(imageBox.Height),
 				half,
 				0,
 			);
+			if err != nil {
+				ctx.JSON(
+					http.StatusBadRequest,
+					newErrorJson(
+						"Sorry, but We cannot proccess your image",
+					),
+				)
+
+				log.Print(err)
+				return;
+			}
+
 		} else if imageBox.Height > imageBox.Width {
 			diff := imageBox.Height - imageBox.Width;
 			half := int(float64(diff) / 2);
 
-			imageBox.CropImage(
+			err = imageBox.CropImage(
 				uint(imageBox.Width),
 				uint(imageBox.Width),
 				0,
 				half,
 			);
+			if err != nil {
+				ctx.JSON(
+					http.StatusBadRequest,
+					newErrorJson(
+						"Sorry, but We cannot proccess your image",
+					),
+				)
+
+				log.Print(err)
+				return;
+			}
 		}
 
 		err = imageBox.ThumbnailImage(imgDim.Width, imgDim.Height);
@@ -227,6 +250,7 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 				),
 			)
 
+			log.Print(err)
 			return;
 		}
 
