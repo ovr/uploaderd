@@ -168,31 +168,28 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 	imageBox.UnsharpMaskImage(0, 0.5, 1, 0.05);
 
-
-
 	for _, imgDim := range resizeImageDimmention {
-		var minimalSide uint;
 
 		if imageBox.Width > imageBox.Height {
-			minimalSide = uint(imageBox.Height);
+			diff := imageBox.Width - imageBox.Height;
+			half := int(float64(diff) / 2);
+
+			imageBox.CropImage(
+				uint(imageBox.Height),
+				uint(imageBox.Height),
+				half,
+				0,
+			);
 		} else {
-			minimalSide = uint(imageBox.Width);
-		}
+			diff := imageBox.Height - imageBox.Width;
+			half := int(float64(diff) / 2);
 
-		minSidehalf := uint(float64(minimalSide) / 2);
-		half := uint(float64(minSidehalf) / 2);
-
-		x := int(uint(float64(imageBox.Width) / 2) - half);
-		y := int(uint(float64(imageBox.Height) / 2) - half);
-
-		log.Print("minSidehalf=", minSidehalf);
-		log.Print("half=", half);
-		log.Print("x=", x);
-		log.Print("y=", y);
-
-		err = imageBox.CropImage(minSidehalf, minSidehalf, x, y);
-		if err != nil {
-			panic(err)
+			imageBox.CropImage(
+				uint(imageBox.Width),
+				uint(imageBox.Width),
+				0,
+				half,
+			);
 		}
 
 		err = imageBox.ThumbnailImage(imgDim.Width, imgDim.Height);
