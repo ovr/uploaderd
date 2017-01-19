@@ -128,12 +128,20 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 	err = imageBox.SetImageInterlaceScheme(imagick.INTERLACE_JPEG);
 	if err != nil {
-		log.Print(err)
+		ctx.SetStatusCode(http.StatusBadRequest);
+		ctx.WriteString(
+			"Sorry, but We cannot proccess your image",
+		)
+		return;
 	}
 
 	err = imageBox.SetImageInterpolateMethod(imagick.INTERPOLATE_PIXEL_BACKGROUND);
 	if err != nil {
-		log.Print(err)
+		ctx.SetStatusCode(http.StatusBadRequest);
+		ctx.WriteString(
+			"Sorry, but We cannot proccess your image",
+		)
+		return;
 	}
 
 	if (imageBox.Width > imageBox.Height) {
@@ -196,7 +204,11 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 		err = imageBox.ThumbnailImage(imgDim.Width, imgDim.Height);
 		if err != nil {
-			panic(err)
+			ctx.SetStatusCode(http.StatusBadRequest);
+			ctx.WriteString(
+				"Sorry, but We cannot proccess your image",
+			)
+			return;
 		}
 
 		uploadThumbnailChannel <- ImageUploadTask{
