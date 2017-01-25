@@ -76,9 +76,8 @@ func main() {
 	imagick.Initialize() // LOAD ONLY ONCE, because DEAD LOCK!! @ovr
 	defer imagick.Terminate()
 
-	uploadThumbnailChannel = make(chan ImageUploadTask, 500); // Async channel but with small buffer 20 <= X <= THINK
-	uploadOriginalChannel = make(chan ImageUploadTask, 1000); // Async channel but with small buffer 20 <= X <= THINK
-
+	uploadThumbnailChannel = make(chan ImageUploadTask, configuration.S3.UploadThumbnailChannelSize);
+	uploadOriginalChannel = make(chan ImageUploadTask, configuration.S3.UploadOriginalChannelSize);
 
 	db, err := gorm.Open(configuration.DB.Dialect, configuration.DB.Uri)
 	if err != nil {

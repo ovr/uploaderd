@@ -22,6 +22,9 @@ type S3Config struct {
 	SecretKey string `json:"secret_key"`
 	Region    string `json:"region"`
 	Bucket    string `json:"bucket"`
+
+	UploadThumbnailChannelSize uint `json:"upload_thumbnail_channel_size"`
+	UploadOriginalChannelSize uint `json:"upload_original_channel_size"`
 }
 
 type JWTConfig struct {

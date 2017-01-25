@@ -13,6 +13,8 @@
     "secret_key": "",
     "region": "",
     "bucket": "",
+    "upload_thumbnail_channel_size": 1000,
+    "upload_original_channel_size": 2000
   },
   "cruftflake": {
     "uri": ""
