@@ -1,20 +1,20 @@
 package main
 
 import (
-	"github.com/kataras/iris"
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/kataras/iris"
 )
 
 func createJWTMiddelWare(config JWTConfig) iris.HandlerFunc {
 
 	return iris.HandlerFunc(func(ctx *iris.Context) {
-		authToken := ctx.RequestHeader("X-AUTH-TOKEN");
+		authToken := ctx.RequestHeader("X-AUTH-TOKEN")
 		if authToken == "" {
 			ctx.JSON(
 				iris.StatusForbidden,
 				newErrorJson("You should pass X-AUTH-TOKEN in Headers"),
 			)
-			return;
+			return
 		}
 
 		parser := &jwt.Parser{
@@ -48,7 +48,7 @@ func createJWTMiddelWare(config JWTConfig) iris.HandlerFunc {
 			return
 		}
 
-		ctx.Set("jwt", parsedToken);
+		ctx.Set("jwt", parsedToken)
 		ctx.Next()
 	})
 }

@@ -1,33 +1,33 @@
 package main
 
 import (
-	"log"
 	"crypto/md5"
 	"encoding/hex"
-	"fmt"
-	"io/ioutil"
-	"github.com/kataras/iris"
-	"net/http"
-	"github.com/dgrijalva/jwt-go"
 	"encoding/json"
+	"fmt"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
-	"time"
+	"github.com/kataras/iris"
 	"gopkg.in/gographics/imagick.v3/imagick"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"time"
 )
 
 const (
-	MAX_PHOTO_WIDTH = 6000
+	MAX_PHOTO_WIDTH  = 6000
 	MAX_PHOTO_HEIGHT = 6000
 
-	MIN_PHOTO_WIDTH = 200
+	MIN_PHOTO_WIDTH  = 200
 	MIN_PHOTO_HEIGHT = 200
 
 	// 1920x1080 FULL HD - max original photo size that We store
-	RESIZE_PHOTO_WIDHT = 1920
+	RESIZE_PHOTO_WIDHT  = 1920
 	RESIZE_PHOTO_HEIGHT = 1080
 
 	// 1280/720 HD
-	MAX_BIG_PHOTO_WIDHT = 1280
+	MAX_BIG_PHOTO_WIDHT  = 1280
 	MAX_BIG_PHOTO_HEIGHT = 720
 )
 
@@ -49,7 +49,7 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 		)
 
 		log.Print(err)
-		return;
+		return
 	}
 
 	defer multiPartFile.Close()
@@ -63,7 +63,7 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 			),
 		)
 
-		return;
+		return
 	}
 
 	buff, err := ioutil.ReadAll(multiPartFile)
@@ -74,7 +74,7 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 		)
 
 		log.Print(err)
-		return;
+		return
 	}
 
 	imageBox, err := NewImageFromByteSlice(buff)
@@ -87,9 +87,9 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 		)
 
 		log.Print(err)
-		return;
+		return
 	}
-	defer imageBox.Destroy();
+	defer imageBox.Destroy()
 
 	if imageBox.Width > MAX_PHOTO_WIDTH || imageBox.Height > MAX_PHOTO_HEIGHT {
 		ctx.JSON(
@@ -99,7 +99,7 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 			),
 		)
 
-		return;
+		return
 	}
 
 	if imageBox.Width < MIN_PHOTO_WIDTH || imageBox.Height < MIN_PHOTO_HEIGHT {
@@ -110,7 +110,7 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 			),
 		)
 
-		return;
+		return
 	}
 
 	token := ctx.Get("jwt").(*jwt.Token)
@@ -119,9 +119,9 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 	hasher := md5.New()
 	hasher.Write(buff)
 	hash := hex.EncodeToString(hasher.Sum(nil))
-	hashPathPart := hash[0:2] + "/" + hash[2:4] + "/";
+	hashPathPart := hash[0:2] + "/" + hash[2:4] + "/"
 
-	photoId := generateUUID(zmqClient);
+	photoId := generateUUID(zmqClient)
 
 	uploadOriginalChannel <- ImageUploadTask{
 		Buffer: buff,
@@ -132,11 +132,11 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 	imageBox.SetImageCompression(imagick.COMPRESSION_JPEG)
 	imageBox.SetImageCompressionQuality(85)
 
-	imageBox.StripImage();
-	imageBox.NormalizeImage();
-	imageBox.FixOrientation();
+	imageBox.StripImage()
+	imageBox.NormalizeImage()
+	imageBox.FixOrientation()
 
-	err = imageBox.SetImageInterlaceScheme(imagick.INTERLACE_JPEG);
+	err = imageBox.SetImageInterlaceScheme(imagick.INTERLACE_JPEG)
 	if err != nil {
 		ctx.JSON(
 			http.StatusBadRequest,
@@ -145,10 +145,10 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 			),
 		)
 
-		return;
+		return
 	}
 
-	err = imageBox.SetImageInterpolateMethod(imagick.INTERPOLATE_PIXEL_BACKGROUND);
+	err = imageBox.SetImageInterpolateMethod(imagick.INTERPOLATE_PIXEL_BACKGROUND)
 	if err != nil {
 		ctx.JSON(
 			http.StatusBadRequest,
@@ -157,55 +157,55 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 			),
 		)
 
-		return;
+		return
 	}
 
-	if (imageBox.Width > imageBox.Height) {
-		if (imageBox.Width > MAX_BIG_PHOTO_WIDHT) {
-			proportion := float64(imageBox.Height) / float64(imageBox.Width);
-			imageBox.ResizeImage(MAX_BIG_PHOTO_WIDHT, uint(MAX_BIG_PHOTO_WIDHT * proportion))
+	if imageBox.Width > imageBox.Height {
+		if imageBox.Width > MAX_BIG_PHOTO_WIDHT {
+			proportion := float64(imageBox.Height) / float64(imageBox.Width)
+			imageBox.ResizeImage(MAX_BIG_PHOTO_WIDHT, uint(MAX_BIG_PHOTO_WIDHT*proportion))
 		}
 	} else {
-		if (imageBox.Height > MAX_BIG_PHOTO_HEIGHT) {
-			proportion := float64(imageBox.Width) / float64(imageBox.Height);
-			imageBox.ResizeImage(uint(MAX_BIG_PHOTO_HEIGHT * proportion), MAX_BIG_PHOTO_HEIGHT)
+		if imageBox.Height > MAX_BIG_PHOTO_HEIGHT {
+			proportion := float64(imageBox.Width) / float64(imageBox.Height)
+			imageBox.ResizeImage(uint(MAX_BIG_PHOTO_HEIGHT*proportion), MAX_BIG_PHOTO_HEIGHT)
 		}
 	}
 
 	photo := Photo{
-		Id:photoId,
-		Added:time.Now(),
-		FileName: hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", imageBox.Width, imageBox.Height, uid, photoId),
-		Width: imageBox.Width,
-		Height: imageBox.Height,
-		UserId: uint64(uid),
+		Id:           photoId,
+		Added:        time.Now(),
+		FileName:     hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", imageBox.Width, imageBox.Height, uid, photoId),
+		Width:        imageBox.Width,
+		Height:       imageBox.Height,
+		UserId:       uint64(uid),
 		ThumbVersion: 0,
-		ModApproved: false,
-		Hidden: false,
+		ModApproved:  false,
+		Hidden:       false,
 	}
-	go this.DB.Save(photo);
+	go this.DB.Save(photo)
 
 	uploadOriginalChannel <- ImageUploadTask{
 		Buffer: imageBox.GetImageBlob(),
 		Path:   "photo/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", imageBox.Width, imageBox.Height, uid, photoId),
 	}
 
-	imageBox.UnsharpMaskImage(0, 0.5, 1, 0.05);
+	imageBox.UnsharpMaskImage(0, 0.5, 1, 0.05)
 
 	for _, imgDim := range resizeImageDimmention {
 
 		// Image can be horizontal, vertical or square
 		// on square image, it's not needed to crop
 		if imageBox.Width > imageBox.Height {
-			diff := imageBox.Width - imageBox.Height;
-			half := int(float64(diff) / 2);
+			diff := imageBox.Width - imageBox.Height
+			half := int(float64(diff) / 2)
 
 			err = imageBox.CropImage(
 				uint(imageBox.Height),
 				uint(imageBox.Height),
 				half,
 				0,
-			);
+			)
 			if err != nil {
 				ctx.JSON(
 					http.StatusBadRequest,
@@ -215,19 +215,19 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 				)
 
 				log.Print(err)
-				return;
+				return
 			}
 
 		} else if imageBox.Height > imageBox.Width {
-			diff := imageBox.Height - imageBox.Width;
-			half := int(float64(diff) / 2);
+			diff := imageBox.Height - imageBox.Width
+			half := int(float64(diff) / 2)
 
 			err = imageBox.CropImage(
 				uint(imageBox.Width),
 				uint(imageBox.Width),
 				0,
 				half,
-			);
+			)
 			if err != nil {
 				ctx.JSON(
 					http.StatusBadRequest,
@@ -237,11 +237,11 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 				)
 
 				log.Print(err)
-				return;
+				return
 			}
 		}
 
-		err = imageBox.ThumbnailImage(imgDim.Width, imgDim.Height);
+		err = imageBox.ThumbnailImage(imgDim.Width, imgDim.Height)
 		if err != nil {
 			ctx.JSON(
 				http.StatusBadRequest,
@@ -251,7 +251,7 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 			)
 
 			log.Print(err)
-			return;
+			return
 		}
 
 		uploadThumbnailChannel <- ImageUploadTask{

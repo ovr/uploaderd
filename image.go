@@ -22,12 +22,12 @@ func NewImageFromByteSlice(buff []byte) (*ImageBox, error) {
 		mw:     mw,
 		Width:  uint64(mw.GetImageWidth()),
 		Height: uint64(mw.GetImageHeight()),
-	};
+	}
 	return imgBox, nil
 }
 
 func (this *ImageBox) GetImageBlob() []byte {
-	return this.mw.GetImageBlob();
+	return this.mw.GetImageBlob()
 }
 
 func (this *ImageBox) FixOrientation() {
@@ -64,8 +64,8 @@ func (this *ImageBox) FixOrientation() {
 }
 
 func (this *ImageBox) CropImage(width, height uint, x, y int) error {
-	this.Width = uint64(width);
-	this.Height = uint64(height);
+	this.Width = uint64(width)
+	this.Height = uint64(height)
 
 	return this.mw.CropImage(width, height, x, y)
 }
@@ -115,8 +115,8 @@ func (this *ImageBox) ThumbnailImage(width, height uint) error {
 }
 
 func (this *ImageBox) ResizeImage(width, height uint) error {
-	this.Width = uint64(width);
-	this.Height = uint64(height);
+	this.Width = uint64(width)
+	this.Height = uint64(height)
 
 	return this.mw.ResizeImage(width, height, imagick.FILTER_UNDEFINED)
 }

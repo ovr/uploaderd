@@ -1,10 +1,10 @@
 package main
 
 import (
-	"io/ioutil"
-	"fmt"
-	"os"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
 )
 
 type DataBaseConfig struct {
@@ -24,7 +24,7 @@ type S3Config struct {
 	Bucket    string `json:"bucket"`
 
 	UploadThumbnailChannelSize uint `json:"upload_thumbnail_channel_size"`
-	UploadOriginalChannelSize uint `json:"upload_original_channel_size"`
+	UploadOriginalChannelSize  uint `json:"upload_original_channel_size"`
 }
 
 type JWTConfig struct {
@@ -36,10 +36,10 @@ type CruftFlakeConfig struct {
 }
 
 type Configuration struct {
-	DB         DataBaseConfig      `json:"db"`
-	S3         S3Config      `json:"s3"`
+	DB         DataBaseConfig   `json:"db"`
+	S3         S3Config         `json:"s3"`
 	CruftFlake CruftFlakeConfig `json:"cruftflake"`
-	JWT        JWTConfig `json:"jwt"`
+	JWT        JWTConfig        `json:"jwt"`
 }
 
 func (this *Configuration) Init(configFile string) {

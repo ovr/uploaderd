@@ -1,19 +1,19 @@
 package main
 
 import (
-	"gopkg.in/gographics/imagick.v3/imagick" // v3 for 7+
 	_ "github.com/go-sql-driver/mysql"
-	zmq "github.com/pebbe/zmq4"
-	"github.com/kataras/iris"
-	"github.com/jinzhu/gorm"
+	"github.com/iris-contrib/middleware/logger"
 	"github.com/iris-contrib/middleware/pprof"
 	"github.com/iris-contrib/middleware/recovery"
-	"github.com/iris-contrib/middleware/logger"
+	"github.com/jinzhu/gorm"
+	"github.com/kataras/iris"
+	zmq "github.com/pebbe/zmq4"
+	"gopkg.in/gographics/imagick.v3/imagick" // v3 for 7+
 )
 
 type ErrorJsonBody struct {
-	Message string `json:"message"`	
-} 
+	Message string `json:"message"`
+}
 
 type ErrorJson struct {
 	Error ErrorJsonBody `json:"error"`
@@ -28,46 +28,46 @@ func newErrorJson(message string) ErrorJson {
 }
 
 type ImageDim struct {
-	Width uint
+	Width  uint
 	Height uint
 }
 
 type ImageUploadTask struct {
 	// Array in slice, in-memory file
 	Buffer []byte
-	Path string
+	Path   string
 }
 
 var (
-	resizeImageDimmention []ImageDim = []ImageDim {
-		ImageDim {
-			Width: 180,
+	resizeImageDimmention []ImageDim = []ImageDim{
+		ImageDim{
+			Width:  180,
 			Height: 180,
 		},
-		ImageDim {
-			Width: 100,
+		ImageDim{
+			Width:  100,
 			Height: 100,
 		},
-		ImageDim {
-			Width: 75,
+		ImageDim{
+			Width:  75,
 			Height: 75,
 		},
-		ImageDim {
-			Width: 50,
+		ImageDim{
+			Width:  50,
 			Height: 50,
 		},
 	}
 
 	// upload to S3 channel
 	uploadThumbnailChannel chan ImageUploadTask
-	uploadOriginalChannel chan ImageUploadTask
+	uploadOriginalChannel  chan ImageUploadTask
 
 	// tmp workaround @todo
 	zmqClient *zmq.Socket
 )
 
 func main() {
-	configuration := &Configuration{};
+	configuration := &Configuration{}
 	configuration.Init("./config.json")
 
 	zmqClient, _ = zmq.NewSocket(zmq.REQ)
@@ -76,8 +76,8 @@ func main() {
 	imagick.Initialize() // LOAD ONLY ONCE, because DEAD LOCK!! @ovr
 	defer imagick.Terminate()
 
-	uploadThumbnailChannel = make(chan ImageUploadTask, configuration.S3.UploadThumbnailChannelSize);
-	uploadOriginalChannel = make(chan ImageUploadTask, configuration.S3.UploadOriginalChannelSize);
+	uploadThumbnailChannel = make(chan ImageUploadTask, configuration.S3.UploadThumbnailChannelSize)
+	uploadOriginalChannel = make(chan ImageUploadTask, configuration.S3.UploadOriginalChannelSize)
 
 	db, err := gorm.Open(configuration.DB.Dialect, configuration.DB.Uri)
 	if err != nil {
@@ -89,8 +89,8 @@ func main() {
 	db.DB().SetMaxIdleConns(configuration.DB.MaxIdleConnections)
 	db.DB().SetMaxOpenConns(configuration.DB.MaxOpenConnections)
 
-	go startUploader(uploadThumbnailChannel, configuration.S3);
-	go startUploader(uploadOriginalChannel, configuration.S3);
+	go startUploader(uploadThumbnailChannel, configuration.S3)
+	go startUploader(uploadOriginalChannel, configuration.S3)
 
 	api := iris.New()
 
@@ -106,7 +106,7 @@ func main() {
 		ImagePostHandler{
 			DB: db,
 		},
-	);
+	)
 
 	api.Listen(":8989")
 }

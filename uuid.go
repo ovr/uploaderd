@@ -1,8 +1,8 @@
 package main
 
 import (
-	"strconv"
 	zmq "github.com/pebbe/zmq4"
+	"strconv"
 	"sync"
 )
 
@@ -14,7 +14,7 @@ var (
 func tryUUID(client *zmq.Socket) (uint64, error) {
 	clientMutex.Lock()
 
-	_, err := client.SendMessage("GEN");
+	_, err := client.SendMessage("GEN")
 	if err != nil {
 		return 0, err
 	}
@@ -34,14 +34,13 @@ func tryUUID(client *zmq.Socket) (uint64, error) {
 	return res, nil
 }
 
-func generateUUID(client *zmq.Socket) (uint64)  {
+func generateUUID(client *zmq.Socket) uint64 {
 	for i := 0; i < 5; i++ {
-		res, err := tryUUID(client);
+		res, err := tryUUID(client)
 		if err == nil {
-			return res;
+			return res
 		}
 	}
 
 	panic("Cannot generate UUID after N tries")
 }
-
