@@ -1,7 +1,7 @@
-package: .
+package: github.com/interpals/uploaderd
 import:
 - package: github.com/aws/aws-sdk-go
-  version: ~1.6.10
+  version: ~1.6.18
   subpackages:
   - aws
   - aws/credentials
@@ -10,19 +10,16 @@ import:
 - package: github.com/dgrijalva/jwt-go
   version: ~3.0.0
 - package: github.com/go-sql-driver/mysql
-  version: ~1.3.0
-- package: github.com/iris-contrib/middleware
-  version: ~5.0.0
-  subpackages:
-  - logger
-  - pprof
-  - recovery
+  version: ^1.3.0
 - package: github.com/jinzhu/gorm
   version: ~1.0.0
 - package: github.com/kataras/iris
-  version: ~6.1.2
+  version: 6.1.2
 - package: github.com/pebbe/zmq4
 - package: gopkg.in/gographics/imagick.v3
   version: ~3.0.0
   subpackages:
   - imagick
+- package: gopkg.in/square/go-jose.v1
+  subpackages:
+  - cipher
