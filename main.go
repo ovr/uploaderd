@@ -2,9 +2,9 @@ package main
 
 import (
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/iris-contrib/middleware/logger"
-	"github.com/iris-contrib/middleware/pprof"
-	"github.com/iris-contrib/middleware/recovery"
+	"github.com/interpals/uploaderd/middleware/logger"
+	"github.com/interpals/uploaderd/middleware/pprof"
+	"github.com/interpals/uploaderd/middleware/recovery"
 	"github.com/jinzhu/gorm"
 	"github.com/kataras/iris"
 	zmq "github.com/pebbe/zmq4"
