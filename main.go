@@ -9,6 +9,7 @@ import (
 	"github.com/kataras/iris"
 	zmq "github.com/pebbe/zmq4"
 	"gopkg.in/gographics/imagick.v3/imagick" // v3 for 7+
+	"flag"
 )
 
 type ErrorJsonBody struct {
@@ -67,8 +68,15 @@ var (
 )
 
 func main() {
+	var (
+		configFile    string
+	)
+
+	flag.StringVar(&configFile, "config", "./config.json", "Config filepath")
+	flag.Parse()
+
 	configuration := &Configuration{}
-	configuration.Init("./config.json")
+	configuration.Init(configFile)
 
 	zmqClient, _ = zmq.NewSocket(zmq.REQ)
 	zmqClient.Connect(configuration.CruftFlake.Uri)
