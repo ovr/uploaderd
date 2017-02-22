@@ -192,7 +192,7 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 		ctx.JSON(
 			http.StatusBadRequest,
 			newErrorJson(
-				fmt.Sprintf("Image is too small, max %dx%d", MIN_PHOTO_WIDTH, MIN_PHOTO_HEIGHT),
+				fmt.Sprintf("Image is too small, min %dx%d", MIN_PHOTO_WIDTH, MIN_PHOTO_HEIGHT),
 			),
 		)
 
