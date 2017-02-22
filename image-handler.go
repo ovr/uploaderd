@@ -40,41 +40,90 @@ type ImagePostHandler struct {
 }
 
 func (this ImagePostHandler) Serve(ctx *iris.Context) {
+	var buff []byte
 
-	multiPartFile, info, err := ctx.Request.FormFile("file")
-	if err != nil {
-		ctx.JSON(
-			http.StatusBadRequest,
-			newErrorJson("We cannot find upload file inside file field"),
-		)
+	link := ctx.Request.PostFormValue("link")
+	if len(link) > 0 {
+		resp, err := http.Get(link)
+		if err != nil {
+			ctx.JSON(
+				http.StatusBadRequest,
+				newErrorJson("We cannot request/download image from link"),
+			)
 
-		log.Print(err)
-		return
-	}
+			log.Print(err)
+			return
+		}
 
-	defer multiPartFile.Close()
+		if resp.StatusCode != 200 {
+			ctx.JSON(
+				http.StatusBadRequest,
+				newErrorJson(
+					fmt.Sprintf("Wrong status code: %d", resp.StatusCode),
+				),
+			)
 
-	contentType := info.Header.Get("Content-Type")
-	if !isImageContentType(contentType) {
-		ctx.JSON(
-			http.StatusBadRequest,
-			newErrorJson(
-				fmt.Sprintf("Wrong content type: %s", contentType),
-			),
-		)
+			return
+		}
 
-		return
-	}
+		contentType := resp.Header.Get("Content-Type")
+		if !isImageContentType(contentType) {
+			ctx.JSON(
+				http.StatusBadRequest,
+				newErrorJson(
+					fmt.Sprintf("Wrong content type: %s", contentType),
+				),
+			)
 
-	buff, err := ioutil.ReadAll(multiPartFile)
-	if err != nil {
-		ctx.JSON(
-			http.StatusBadRequest,
-			newErrorJson("Cannot read file, it's not correct"),
-		)
+			return
+		}
 
-		log.Print(err)
-		return
+		buff, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			ctx.JSON(
+				http.StatusBadRequest,
+				newErrorJson("Cannot read file, it's not correct"),
+			)
+
+			log.Print(err)
+			return
+		}
+	} else {
+		multiPartFile, info, err := ctx.Request.FormFile("file")
+		if err != nil {
+			ctx.JSON(
+				http.StatusBadRequest,
+				newErrorJson("We cannot find upload file inside file field"),
+			)
+
+			log.Print(err)
+			return
+		}
+
+		defer multiPartFile.Close()
+
+		contentType := info.Header.Get("Content-Type")
+		if !isImageContentType(contentType) {
+			ctx.JSON(
+				http.StatusBadRequest,
+				newErrorJson(
+					fmt.Sprintf("Wrong content type: %s", contentType),
+				),
+			)
+
+			return
+		}
+
+		buff, err = ioutil.ReadAll(multiPartFile)
+		if err != nil {
+			ctx.JSON(
+				http.StatusBadRequest,
+				newErrorJson("Cannot read file, it's not correct"),
+			)
+
+			log.Print(err)
+			return
+		}
 	}
 
 	imageBox, err := NewImageFromByteSlice(buff)
