@@ -63,6 +63,8 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 			return
 		}
 
+		defer resp.Body.Close()
+
 		if resp.StatusCode != 200 {
 			ctx.JSON(
 				http.StatusBadRequest,
