@@ -66,7 +66,8 @@ var (
 
 func main() {
 	var (
-		configFile    string
+		configFile string
+		err        error
 	)
 
 	flag.StringVar(&configFile, "config", "./config.json", "Config filepath")
@@ -75,8 +76,15 @@ func main() {
 	configuration := &Configuration{}
 	configuration.Init(configFile)
 
-	zmqClient, _ := zmq.NewSocket(zmq.REQ)
-	zmqClient.Connect(configuration.CruftFlake.Uri)
+	zmqClient, err := zmq.NewSocket(zmq.REQ)
+	if err != nil {
+		panic(err)
+	}
+
+	err = zmqClient.Connect(configuration.CruftFlake.Uri)
+	if err != nil {
+		panic(err)
+	}
 
 	imagick.Initialize() // LOAD ONLY ONCE, because DEAD LOCK!! @ovr
 	defer imagick.Terminate()
@@ -88,6 +96,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	defer db.Close()
 
 	db.LogMode(configuration.DB.ShowLog)
@@ -109,7 +118,7 @@ func main() {
 		"/v1/image",
 		createJWTMiddelWare(configuration.JWT),
 		ImagePostHandler{
-			DB: db,
+			DB:  db,
 			ZMQ: zmqClient,
 		},
 	)
