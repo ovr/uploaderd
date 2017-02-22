@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	zmq "github.com/pebbe/zmq4"
 )
 
 const (
@@ -39,6 +40,7 @@ func isImageContentType(contentType string) bool {
 
 type ImagePostHandler struct {
 	DB *gorm.DB
+	ZMQ *zmq.Socket
 }
 
 func (this ImagePostHandler) Serve(ctx *iris.Context) {
@@ -207,7 +209,7 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 	hash := hex.EncodeToString(hasher.Sum(nil))
 	hashPathPart := hash[0:2] + "/" + hash[2:4] + "/"
 
-	photoId := generateUUID(zmqClient)
+	photoId := generateUUID(this.ZMQ)
 
 	uploadOriginalChannel <- ImageUploadTask{
 		Buffer: buff,

@@ -62,9 +62,6 @@ var (
 	// upload to S3 channel
 	uploadThumbnailChannel chan ImageUploadTask
 	uploadOriginalChannel  chan ImageUploadTask
-
-	// tmp workaround @todo
-	zmqClient *zmq.Socket
 )
 
 func main() {
@@ -78,7 +75,7 @@ func main() {
 	configuration := &Configuration{}
 	configuration.Init(configFile)
 
-	zmqClient, _ = zmq.NewSocket(zmq.REQ)
+	zmqClient, _ := zmq.NewSocket(zmq.REQ)
 	zmqClient.Connect(configuration.CruftFlake.Uri)
 
 	imagick.Initialize() // LOAD ONLY ONCE, because DEAD LOCK!! @ovr
@@ -113,6 +110,7 @@ func main() {
 		createJWTMiddelWare(configuration.JWT),
 		ImagePostHandler{
 			DB: db,
+			ZMQ: zmqClient,
 		},
 	)
 
