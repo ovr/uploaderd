@@ -44,7 +44,11 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 	link := ctx.Request.PostFormValue("link")
 	if len(link) > 0 {
-		resp, err := http.Get(link)
+		netClient := &http.Client{
+			Timeout: time.Second * 30,
+		}
+
+		resp, err := netClient.Get(link)
 		if err != nil {
 			ctx.JSON(
 				http.StatusBadRequest,
