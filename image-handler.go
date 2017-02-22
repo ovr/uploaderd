@@ -8,12 +8,12 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
 	"github.com/kataras/iris"
+	zmq "github.com/pebbe/zmq4"
 	"gopkg.in/gographics/imagick.v3/imagick"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
-	zmq "github.com/pebbe/zmq4"
 )
 
 const (
@@ -39,7 +39,7 @@ func isImageContentType(contentType string) bool {
 }
 
 type ImagePostHandler struct {
-	DB *gorm.DB
+	DB  *gorm.DB
 	ZMQ *zmq.Socket
 }
 

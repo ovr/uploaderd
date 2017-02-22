@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/interpals/uploaderd/middleware/logger"
 	"github.com/interpals/uploaderd/middleware/pprof"
@@ -9,7 +10,6 @@ import (
 	"github.com/kataras/iris"
 	zmq "github.com/pebbe/zmq4"
 	"gopkg.in/gographics/imagick.v3/imagick" // v3 for 7+
-	"flag"
 )
 
 type ErrorJsonBody struct {
