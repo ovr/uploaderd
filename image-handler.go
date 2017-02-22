@@ -16,6 +16,8 @@ import (
 )
 
 const (
+	MAX_PHOTO_FILE_SIZE = 20 * 1024 * 1024
+
 	MAX_PHOTO_WIDTH  = 6000
 	MAX_PHOTO_HEIGHT = 6000
 
@@ -23,7 +25,7 @@ const (
 	MIN_PHOTO_HEIGHT = 200
 
 	// 1920x1080 FULL HD - max original photo size that We store
-	RESIZE_PHOTO_WIDHT  = 1920
+	RESIZE_PHOTO_WIDTH  = 1920
 	RESIZE_PHOTO_HEIGHT = 1080
 
 	// 1280/720 HD
@@ -44,7 +46,7 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 	link := ctx.Request.PostFormValue("link")
 	if len(link) > 0 {
-		netClient := &http.Client{
+		netClient := http.Client{
 			Timeout: time.Second * 30,
 		}
 
@@ -64,6 +66,22 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 				http.StatusBadRequest,
 				newErrorJson(
 					fmt.Sprintf("Wrong status code: %d", resp.StatusCode),
+				),
+			)
+
+			return
+		}
+
+		// Can be -1, indicates that the length is unknown
+		if resp.ContentLength > MAX_PHOTO_FILE_SIZE {
+			ctx.JSON(
+				http.StatusBadRequest,
+				newErrorJson(
+					fmt.Sprintf(
+						"File is too big, actual: %d, max: %d",
+						resp.ContentLength,
+						MAX_PHOTO_FILE_SIZE,
+					),
 				),
 			)
 
@@ -128,6 +146,21 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 			log.Print(err)
 			return
 		}
+	}
+
+	if len(buff) > MAX_PHOTO_FILE_SIZE {
+		ctx.JSON(
+			http.StatusBadRequest,
+			newErrorJson(
+				fmt.Sprintf(
+					"File is too big, actual: %d, max: %d",
+					len(buff),
+					MAX_PHOTO_FILE_SIZE,
+				),
+			),
+		)
+
+		return
 	}
 
 	imageBox, err := NewImageFromByteSlice(buff)
