@@ -14,6 +14,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"strconv"
 )
 
 const (
@@ -44,6 +45,25 @@ type ImagePostHandler struct {
 }
 
 func (this ImagePostHandler) Serve(ctx *iris.Context) {
+	var (
+		albumId *uint64
+	)
+
+	aid := ctx.Request.PostFormValue("aid")
+	if len(aid) > 0 {
+		aid, err := strconv.ParseUint(aid, 10, 64)
+		if err != nil {
+			ctx.JSON(
+				http.StatusBadRequest,
+				newErrorJson("Invalid request parameter 'aid'"),
+			)
+
+			return
+		}
+
+		albumId = &aid
+	}
+
 	var buff []byte
 
 	link := ctx.Request.PostFormValue("link")
@@ -253,25 +273,26 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 	if imageBox.Width > imageBox.Height {
 		if imageBox.Width > MAX_BIG_PHOTO_WIDHT {
 			proportion := float64(imageBox.Height) / float64(imageBox.Width)
-			imageBox.ResizeImage(MAX_BIG_PHOTO_WIDHT, uint(MAX_BIG_PHOTO_WIDHT*proportion))
+			imageBox.ResizeImage(MAX_BIG_PHOTO_WIDHT, uint(MAX_BIG_PHOTO_WIDHT * proportion))
 		}
 	} else {
 		if imageBox.Height > MAX_BIG_PHOTO_HEIGHT {
 			proportion := float64(imageBox.Width) / float64(imageBox.Height)
-			imageBox.ResizeImage(uint(MAX_BIG_PHOTO_HEIGHT*proportion), MAX_BIG_PHOTO_HEIGHT)
+			imageBox.ResizeImage(uint(MAX_BIG_PHOTO_HEIGHT * proportion), MAX_BIG_PHOTO_HEIGHT)
 		}
 	}
 
 	photo := Photo{
-		Id:           photoId,
-		Added:        time.Now(),
-		FileName:     hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", imageBox.Width, imageBox.Height, uid, photoId),
-		Width:        imageBox.Width,
-		Height:       imageBox.Height,
-		UserId:       uint64(uid),
-		ThumbVersion: 0,
-		ModApproved:  false,
-		Hidden:       false,
+		Id:             photoId,
+		Added:          time.Now(),
+		FileName:       hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", imageBox.Width, imageBox.Height, uid, photoId),
+		Width:          imageBox.Width,
+		Height:         imageBox.Height,
+		UserId:         uint64(uid),
+		AlbumId:        albumId,
+		ThumbVersion:   0,
+		ModApproved:    false,
+		Hidden:         false,
 	}
 	go this.DB.Save(photo)
 
