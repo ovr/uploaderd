@@ -13,8 +13,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"time"
 	"strconv"
+	"time"
 )
 
 const (
@@ -49,6 +49,9 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 		albumId *uint64
 	)
 
+	token := ctx.Get("jwt").(*jwt.Token)
+	uid, _ := token.Claims.(jwt.MapClaims)["uid"].(json.Number).Int64()
+
 	aid := ctx.Request.PostFormValue("aid")
 	if len(aid) > 0 {
 		aid, err := strconv.ParseUint(aid, 10, 64)
@@ -56,6 +59,26 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 			ctx.JSON(
 				http.StatusBadRequest,
 				newErrorJson("Invalid request parameter 'aid'"),
+			)
+
+			return
+		}
+
+		var album Album
+
+		if this.DB.Where(&Album{Id: aid}).First(&album).RecordNotFound() {
+			ctx.JSON(
+				http.StatusBadRequest,
+				newErrorJson("Unknown album"),
+			)
+
+			return
+		}
+
+		if album.UserId != uint64(uid) {
+			ctx.JSON(
+				http.StatusForbidden,
+				newErrorJson("It's not your album"),
 			)
 
 			return
@@ -223,9 +246,6 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 		return
 	}
 
-	token := ctx.Get("jwt").(*jwt.Token)
-	uid, _ := token.Claims.(jwt.MapClaims)["uid"].(json.Number).Int64()
-
 	hasher := md5.New()
 	hasher.Write(buff)
 	hash := hex.EncodeToString(hasher.Sum(nil))
@@ -273,26 +293,26 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 	if imageBox.Width > imageBox.Height {
 		if imageBox.Width > MAX_BIG_PHOTO_WIDHT {
 			proportion := float64(imageBox.Height) / float64(imageBox.Width)
-			imageBox.ResizeImage(MAX_BIG_PHOTO_WIDHT, uint(MAX_BIG_PHOTO_WIDHT * proportion))
+			imageBox.ResizeImage(MAX_BIG_PHOTO_WIDHT, uint(MAX_BIG_PHOTO_WIDHT*proportion))
 		}
 	} else {
 		if imageBox.Height > MAX_BIG_PHOTO_HEIGHT {
 			proportion := float64(imageBox.Width) / float64(imageBox.Height)
-			imageBox.ResizeImage(uint(MAX_BIG_PHOTO_HEIGHT * proportion), MAX_BIG_PHOTO_HEIGHT)
+			imageBox.ResizeImage(uint(MAX_BIG_PHOTO_HEIGHT*proportion), MAX_BIG_PHOTO_HEIGHT)
 		}
 	}
 
 	photo := Photo{
-		Id:             photoId,
-		Added:          time.Now(),
-		FileName:       hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", imageBox.Width, imageBox.Height, uid, photoId),
-		Width:          imageBox.Width,
-		Height:         imageBox.Height,
-		UserId:         uint64(uid),
-		AlbumId:        albumId,
-		ThumbVersion:   0,
-		ModApproved:    false,
-		Hidden:         false,
+		Id:           photoId,
+		Added:        time.Now(),
+		FileName:     hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", imageBox.Width, imageBox.Height, uid, photoId),
+		Width:        imageBox.Width,
+		Height:       imageBox.Height,
+		UserId:       uint64(uid),
+		AlbumId:      albumId,
+		ThumbVersion: 0,
+		ModApproved:  false,
+		Hidden:       false,
 	}
 	go this.DB.Save(photo)
 

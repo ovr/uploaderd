@@ -4,6 +4,12 @@ import (
 	"time"
 )
 
+type Album struct {
+	Id          uint64 `gorm:"column:aid" json:"id"`
+	UserId      uint64 `gorm:"column:user_id" json:"uid"`
+	PhotosTotal uint32 `gorm:"column:photo_total"`
+}
+
 type Photo struct {
 	Id           uint64    `gorm:"column:photo_id" json:"id"`
 	Added        time.Time `gorm:"column:added" json:"created"`
