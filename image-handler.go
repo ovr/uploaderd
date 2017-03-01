@@ -27,8 +27,8 @@ const (
 	MIN_PHOTO_HEIGHT = 200
 
 	// 1920x1080 FULL HD - max original photo size that We store
-	RESIZE_PHOTO_WIDTH  = 1920
-	RESIZE_PHOTO_HEIGHT = 1080
+	MAX_ORIGINAL_PHOTO_WIDTH = 1920
+	MAX_ORIGINAL_PHOTO_HEIGHT = 1080
 
 	// 1280/720 HD
 	MAX_BIG_PHOTO_WIDHT  = 1280
@@ -253,6 +253,9 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 	photoId := generateUUID(this.ZMQ)
 
+	// We should resize photo "original" if it's bigger then MAX_ORIGINAL dimensions
+	imageBox.MaxDimensionResize(MAX_ORIGINAL_PHOTO_WIDTH, MAX_ORIGINAL_PHOTO_HEIGHT)
+
 	uploadOriginalChannel <- ImageUploadTask{
 		Buffer: buff,
 		Path:   "orig/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", imageBox.Width, imageBox.Height, uid, photoId),
@@ -290,17 +293,8 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 		return
 	}
 
-	if imageBox.Width > imageBox.Height {
-		if imageBox.Width > MAX_BIG_PHOTO_WIDHT {
-			proportion := float64(imageBox.Height) / float64(imageBox.Width)
-			imageBox.ResizeImage(MAX_BIG_PHOTO_WIDHT, uint(MAX_BIG_PHOTO_WIDHT*proportion))
-		}
-	} else {
-		if imageBox.Height > MAX_BIG_PHOTO_HEIGHT {
-			proportion := float64(imageBox.Width) / float64(imageBox.Height)
-			imageBox.ResizeImage(uint(MAX_BIG_PHOTO_HEIGHT*proportion), MAX_BIG_PHOTO_HEIGHT)
-		}
-	}
+	// We should resize photo "big photo" if it's bigger then MAX_BIG_PHOTO dimensions
+	imageBox.MaxDimensionResize(MAX_BIG_PHOTO_WIDHT, MAX_BIG_PHOTO_HEIGHT)
 
 	photo := Photo{
 		Id:           photoId,
