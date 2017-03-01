@@ -114,6 +114,26 @@ func (this *ImageBox) ThumbnailImage(width, height uint) error {
 	return this.mw.ThumbnailImage(width, height)
 }
 
+func (this *ImageBox) MaxDimensionResize(maxWidth, maxHeight uint) error {
+	if this.Width > this.Height {
+		if uint(this.Width) > maxWidth {
+			proportion := float64(this.Height) / float64(this.Width)
+			height := float64(maxWidth) * proportion
+
+			return this.ResizeImage(maxWidth, uint(height))
+		}
+	} else {
+		if uint(this.Height) > maxHeight {
+			proportion := float64(this.Width) / float64(this.Height)
+			width := float64(maxHeight) * proportion
+
+			return this.ResizeImage(uint(width), maxHeight)
+		}
+	}
+
+	return nil
+}
+
 func (this *ImageBox) ResizeImage(width, height uint) error {
 	this.Width = uint64(width)
 	this.Height = uint64(height)
