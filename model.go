@@ -11,11 +11,11 @@ type Album struct {
 }
 
 type Photo struct {
-	Id           uint64    `gorm:"column:photo_id" json:"id"`
+	Id           uint64    `gorm:"column:photo_id" json:"id,string"`
 	Added        time.Time `gorm:"column:added" json:"created"`
 	FileName     string    `gorm:"column:file_name" json:"path"`
-	UserId       uint64    `gorm:"column:user_id" json:"uid"`
-	AlbumId      *uint64   `gorm:"column:aid" json:"aid"`
+	UserId       uint64    `gorm:"column:user_id" json:"uid,string"`
+	AlbumId      *uint64   `gorm:"column:aid" json:"aid,string"`
 	Description  string    `gorm:"column:description" json:"-"`
 	ModApproved  bool      `gorm:"column:mod_approved" json:"-"`
 	Height       uint64    `json:"height"`
