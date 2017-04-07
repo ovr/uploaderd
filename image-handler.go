@@ -296,6 +296,9 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 	// We should resize photo "big photo" if it's bigger then MAX_BIG_PHOTO dimensions
 	imageBox.MaxDimensionResize(MAX_BIG_PHOTO_WIDHT, MAX_BIG_PHOTO_HEIGHT)
 
+	bigWidth := imageBox.Width;
+	bigHeight := imageBox.Height;
+
 	photo := Photo{
 		Id:           photoId,
 		Added:        time.Now(),
@@ -381,7 +384,16 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 		uploadThumbnailChannel <- ImageUploadTask{
 			Buffer: imageBox.GetImageBlob(),
-			Path:   "photos/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", imgDim.Width, imgDim.Height, uid, photoId),
+			Path:   "thumbs/" + fmt.Sprintf(
+				"%dx%d/%s/%dx%d_%d_%d.jpg",
+				imgDim.Width,
+				imgDim.Height,
+				hashPathPart,
+				bigWidth,
+				bigHeight,
+				uid,
+				photoId,
+			),
 		}
 	}
 
