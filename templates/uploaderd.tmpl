@@ -5,7 +5,7 @@
   },
   "db": {
     "dialect": "mysql",
-    "uri": "{{ getenv "DB_URI" }}",
+    "uri": "{{ getenv "DB_ADDR" }}",
     "max-idle-connections": 1,
     "max-open-connections": 10,
     "log": true,
@@ -21,7 +21,7 @@
     "upload_original_channel_size": 1000
   },
   "cruftflake": {
-    "uri": "{{ getenv "CRUFTFLAKE_URI" }}"
+    "uri": "{{ getenv "CRUFTFLAKE_ADDR" }}"
   },
   "jwt": {
     "secret_key": "{{ getenv "JWT_SECRET" }}"
