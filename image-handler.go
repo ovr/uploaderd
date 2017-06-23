@@ -315,7 +315,7 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 	uploadOriginalChannel <- ImageUploadTask{
 		Buffer: imageBox.GetImageBlob(),
-		Path:   "photo/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", imageBox.Width, imageBox.Height, uid, photoId),
+		Path:   "photos/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", imageBox.Width, imageBox.Height, uid, photoId),
 	}
 
 	imageBox.UnsharpMaskImage(0, 0.5, 1, 0.05)
