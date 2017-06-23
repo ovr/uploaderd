@@ -1,0 +1,29 @@
+{
+  "newrelic": {
+    "appname": "{{ getenv "NEWRELIC_APP_NAME" }}",
+    "key": "{{ getenv "NEWRELIC_LICENSE_KEY" }}"
+  },
+  "db": {
+    "dialect": "mysql",
+    "uri": "{{ getenv "DB_URI" }}",
+    "max-idle-connections": 1,
+    "max-open-connections": 10,
+    "log": true,
+    "threads": 4,
+    "limit": 500
+  },
+  "s3": {
+    "access_key": "{{ getenv "S3_PHOTO_ACCESS_KEY" }}",
+    "secret_key": "{{ getenv "S3_PHOTO_SECRET_KEY" }}",
+    "region": "{{ getenv "S3_PHOTO_REGION }}",
+    "bucket": "{{ getenv "S3_PHOTO_BUCKET" }}",
+    "upload_thumbnail_channel_size": 1000,
+    "upload_original_channel_size": 1000
+  },
+  "cruftflake": {
+    "uri": "{{ getenv "CRUFTFLAKE_URI" }}"
+  },
+  "jwt": {
+    "secret_key": "{{ getenv "JWT_SECRET" }}"
+  }
+}

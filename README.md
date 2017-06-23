@@ -3,6 +3,12 @@ UploaderD
 
 > Photo, video, audio processing with S3 uploading.
 
+Build new docker container:
+
+```
+docker build -t interpals/uploaderd:latest .
+```
+
 # LICENSE
 
 MIT License

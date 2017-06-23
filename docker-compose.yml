@@ -1,0 +1,33 @@
+version: '2'
+
+services:
+  wsd:
+    build: .
+    environment:
+      NEWRELIC_LICENSE_KEY: ${NEWRELIC_LICENSE_KEY}
+      NEWRELIC_APP_NAME: "UploaderD@stage"
+
+      # Common
+      JWT_SECRET: ${INTERPALS_JWT_SECRET}
+      CRUFTFLAKE_URI: ${CRUFTFLAKE_URI}
+
+      # DB
+      DB_URI: ${INTERPALS_DB_ADDR}
+
+      # S3 configuration
+      S3_PHOTO_ACCESS_KEY: ${S3_PHOTO_ACCESS_KEY}
+      S3_PHOTO_SECRET_KEY: ${S3_PHOTO_SECRET_KEY}
+      S3_PHOTO_REGION: ${S3_PHOTO_REGION}
+      S3_PHOTO_BUCKET: ${S3_PHOTO_BUCKET}
+    ports:
+      - "8989:8989"
+
+    network_mode: host
+    restart: always
+
+    mem_limit: 1024m
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 20000
+        hard: 40000
