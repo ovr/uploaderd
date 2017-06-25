@@ -21,12 +21,16 @@ RUN apt-get update \
     && apt-get -y upgrade \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
-        golang-go \
         git \
         curl \
-        imagemagick \
-        libmagickwand-dev \
+        wget \
+        libzmq3-dev \
+    && wget http://www.imagemagick.org/download/ImageMagick-7.0.6-0.tar.gz \
+    && tar xvzf ImageMagick-7.0.6-0.tar.gz \
+    && rm ImageMagick-7.0.6-0.tar.gz \
+    && cd ImageMagick-* && ./configure && make && make install && ldconfig /usr/local/lib \
     && curl https://glide.sh/get | sh \
+    && apt-get remove -y curl wget git \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
