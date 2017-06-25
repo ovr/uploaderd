@@ -24,7 +24,7 @@ RUN apt-get update \
         golang-go \
         git \
         curl \
-        imagemagick
+        imagemagick \
         libmagickwand-dev \
     && curl https://glide.sh/get | sh \
     && apt-get clean \
