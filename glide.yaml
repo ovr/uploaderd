@@ -14,7 +14,7 @@ import:
 - package: github.com/jinzhu/gorm
   version: ~1.0.0
 - package: github.com/kataras/iris
-  version: 6.1.2
+  version: ~6.2.0
 - package: github.com/pebbe/zmq4
 - package: gopkg.in/gographics/imagick.v3
   version: ~3.0.0

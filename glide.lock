@@ -1,8 +1,8 @@
-hash: 417a7b86350b99185282132bc44e7aedd184d0ec5cd477156b6244848ad53e5c
-updated: 2017-02-01T05:32:19.520802079Z
+hash: 6993c7078442f3418a0f3f887a94123776ee4f57e18893f412c1f657fcd3ded8
+updated: 2017-06-26T01:37:53.651061515Z
 imports:
 - name: github.com/aws/aws-sdk-go
-  version: 3f8f870ec9939e32b3372abf74d24e468bcd285d
+  version: 00fb2125993965df739fa3398b03bef3eb2e198f
   subpackages:
   - aws
   - aws/awserr
@@ -29,10 +29,10 @@ imports:
   - private/waiter
   - service/s3
   - service/sts
+- name: github.com/BurntSushi/toml
+  version: 8b58b6030fce084b58a61e2bc3fdf183d5881ab4
 - name: github.com/dgrijalva/jwt-go
   version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
-- name: github.com/fatih/structs
-  version: a720dfa8df582c51dee1b36feabb906bde1588bd
 - name: github.com/geekypanda/httpcache
   version: 76ba6c68462ae362cda7564c44492b95322b363a
   subpackages:
@@ -54,26 +54,12 @@ imports:
   version: 53e6ce116135b80d037921a7fdd5138cf32d7a8a
   subpackages:
   - query
-- name: github.com/gorilla/websocket
-  version: c36f2fe5c330f0ac404b616b96c438b8616b1aaf
 - name: github.com/hashicorp/go-version
   version: e96d3840402619007766590ecea8dd7af1292276
 - name: github.com/imdario/mergo
   version: 50d4dbd4eb0e84778abe37cefef140271d96fade
 - name: github.com/iris-contrib/formBinder
   version: 81b6a071e35797b83562caf4b3cad24dc01912dc
-- name: github.com/iris-contrib/lego
-  version: 095d7f6459c501cb15319aa2754afa221b81a3ec
-  subpackages:
-  - acme
-- name: github.com/iris-contrib/letsencrypt
-  version: 1a3e5c619a13b307df3b1b4da7cb7e57d2e156dd
-- name: github.com/iris-contrib/middleware
-  version: eff973db50aaea60190e75f8f5dc343f7de34b38
-  subpackages:
-  - logger
-  - pprof
-  - recovery
 - name: github.com/jinzhu/gorm
   version: 5174cc5c242a728b435ea2be8a2f7f998e15429b
 - name: github.com/jinzhu/inflection
@@ -82,31 +68,8 @@ imports:
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/kataras/go-errors
   version: 0f977b82cc78d5d31bb75fb6f903ad9e852c8bbd
-- name: github.com/kataras/go-fs
-  version: c029e113d9faaf558b730f06041c8bf9545a3502
-- name: github.com/kataras/go-options
-  version: 23b556c1b935c594ec6d71ff81ead4dbeec3aa8d
-- name: github.com/kataras/go-serializer
-  version: 0bd874a15c70db74ef2e668e5eeda27041f03b81
-  subpackages:
-  - data
-  - json
-  - jsonp
-  - markdown
-  - text
-  - xml
-- name: github.com/kataras/go-sessions
-  version: 0bbd868d2fae7aa2577d5331f9166216a12ecb35
-- name: github.com/kataras/go-template
-  version: 457f21178102f4688603eccbb4f2e8d5ae1023bf
-  subpackages:
-  - html
-- name: github.com/kataras/go-websocket
-  version: c688b53fa37da2a8bcca1976a68b8e649e76d8a7
 - name: github.com/kataras/iris
-  version: b794d630fdab4f3fa1b7bec7921ae559fd9a4bf9
-  subpackages:
-  - utils
+  version: 09a2066268f99fc8ee40ecddde8b415f76250f4b
 - name: github.com/klauspost/compress
   version: 461e8fd8397ae84a23f56e385801e4feda2048ce
   subpackages:
@@ -119,25 +82,17 @@ imports:
   version: cb6bfca970f6908083f26f39a79009d608efd5cd
 - name: github.com/microcosm-cc/bluemonday
   version: e79763773ab6222ca1d5a7cbd9d62d83c1f77081
-- name: github.com/miekg/dns
-  version: 99f84ae56e75126dd77e5de4fae2ea034a468ca1
 - name: github.com/pebbe/zmq4
   version: 86a301353efd154593d5c851a092dc21e907a601
 - name: github.com/russross/blackfriday
   version: 5f33e7b7878355cd2b7e6b8eefc48a5472c69f70
 - name: github.com/shurcooL/sanitized_anchor_name
   version: 1dba4b3954bc059efc3991ec364f9f9a35f597d2
-- name: github.com/square/go-jose
-  version: 50df5ca198e569d06795909c091ac0cea62e925a
-  subpackages:
-  - cipher
-  - json
 - name: github.com/valyala/bytebufferpool
   version: e746df99fe4a3986f4d4f79e13c1e0117ce9c2f7
 - name: github.com/valyala/fasthttp
   version: b69eba7101fa6c66ba4db0641968a401c9f4f148
   subpackages:
-  - fasthttpadaptor
   - fasthttputil
   - stackless
 - name: golang.org/x/crypto
@@ -145,7 +100,6 @@ imports:
   subpackages:
   - acme
   - acme/autocert
-  - ocsp
 - name: golang.org/x/net
   version: f2499483f923065a842d38eb4c7f1927e6fc6e6d
   subpackages:
@@ -153,24 +107,15 @@ imports:
   - context/ctxhttp
   - html
   - html/atom
-  - publicsuffix
-- name: golang.org/x/time
-  version: f51c12702a4d776e4c1fa9b0fabab841babae631
-  subpackages:
-  - rate
 - name: gopkg.in/gographics/imagick.v3
   version: 06fa38593213b8f900a322f9294d8825a6b113f3
   subpackages:
   - imagick
   - imagick/types
-- name: gopkg.in/iris-contrib/websocket.v5
-  version: bc14117ad25db88dd667f03170dc6db1e5c1f78f
-- name: gopkg.in/kataras/go-websocket.v0
-  version: fbd354848b26d771444dc7475237e2b434393034
-- name: gopkg.in/kataras/iris.v5
-  version: 879c36ba3a2ad1cbdfcdaf1d1e79218c4e5c26d7
 - name: gopkg.in/square/go-jose.v1
   version: aa2e30fdd1fe9dd3394119af66451ae790d50e0d
   subpackages:
   - cipher
+- name: gopkg.in/yaml.v2
+  version: cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b
 testImports: []
