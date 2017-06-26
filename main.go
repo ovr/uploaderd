@@ -2,12 +2,15 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
+	"github.com/newrelic/go-agent"
 	zmq "github.com/pebbe/zmq4"
 	"github.com/urfave/negroni"
 	"gopkg.in/gographics/imagick.v3/imagick" // v3 for 7+
 	"net/http"
+	"os"
 )
 
 type ErrorJsonBody struct {
@@ -74,6 +77,15 @@ func main() {
 	configuration := &Configuration{}
 	configuration.Init(configFile)
 
+	app, err := newrelic.NewApplication(
+		newrelic.NewConfig(configuration.NewRelic.AppName, configuration.NewRelic.Key),
+	)
+
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
 	zmqClient, err := zmq.NewSocket(zmq.REQ)
 	if err != nil {
 		panic(err)
@@ -106,10 +118,10 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.Handle("/v1/image", ImagePostHandler{
+	mux.Handle(newrelic.WrapHandle(app, "/v1/image", ImagePostHandler{
 		DB:  db,
 		ZMQ: zmqClient,
-	})
+	}))
 
 	n := negroni.New(negroni.NewRecovery(), negroni.NewLogger(), NewJWT(configuration.JWT.SecretKey))
 	n.UseHandler(mux)

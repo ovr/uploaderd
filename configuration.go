@@ -35,7 +35,13 @@ type CruftFlakeConfig struct {
 	Uri string `json:"uri"`
 }
 
+type NewRelicConfig struct {
+	AppName string `json:"appname"`
+	Key     string `json:"key"`
+}
+
 type Configuration struct {
+	NewRelic   NewRelicConfig   `json:"newrelic"`
 	DB         DataBaseConfig   `json:"db"`
 	S3         S3Config         `json:"s3"`
 	CruftFlake CruftFlakeConfig `json:"cruftflake"`
