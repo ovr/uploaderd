@@ -28,8 +28,9 @@ RUN apt-get update \
     && wget http://www.imagemagick.org/download/ImageMagick-7.0.6-0.tar.gz \
     && tar xvzf ImageMagick-7.0.6-0.tar.gz \
     && rm ImageMagick-7.0.6-0.tar.gz \
-    && cd ImageMagick-* && ./configure && make && make install && ldconfig /usr/local/lib \
+    && cd ImageMagick-* && ./configure && make && make install && ldconfig /usr/local/lib && cd .. \
     && curl https://glide.sh/get | sh \
+    && glide install \
     && apt-get remove -y curl wget git \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
