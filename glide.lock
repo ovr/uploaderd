@@ -1,5 +1,5 @@
-hash: 6993c7078442f3418a0f3f887a94123776ee4f57e18893f412c1f657fcd3ded8
-updated: 2017-06-26T01:37:53.651061515Z
+hash: 069fad0ead8bb1e574ae0f87705c4a3abbd8bf049080fddc1040541b49a31dd1
+updated: 2017-06-26T02:25:13.957218738Z
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 00fb2125993965df739fa3398b03bef3eb2e198f
@@ -88,6 +88,8 @@ imports:
   version: 5f33e7b7878355cd2b7e6b8eefc48a5472c69f70
 - name: github.com/shurcooL/sanitized_anchor_name
   version: 1dba4b3954bc059efc3991ec364f9f9a35f597d2
+- name: github.com/urfave/negroni
+  version: fde5e16d32adc7ad637e9cd9ad21d4ebc6192535
 - name: github.com/valyala/bytebufferpool
   version: e746df99fe4a3986f4d4f79e13c1e0117ce9c2f7
 - name: github.com/valyala/fasthttp

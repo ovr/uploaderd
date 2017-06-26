@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
-	"github.com/kataras/iris"
 	zmq "github.com/pebbe/zmq4"
 	"gopkg.in/gographics/imagick.v3/imagick"
 	"io/ioutil"
@@ -27,7 +26,7 @@ const (
 	MIN_PHOTO_HEIGHT = 200
 
 	// 1920x1080 FULL HD - max original photo size that We store
-	MAX_ORIGINAL_PHOTO_WIDTH = 1920
+	MAX_ORIGINAL_PHOTO_WIDTH  = 1920
 	MAX_ORIGINAL_PHOTO_HEIGHT = 1080
 
 	// 1280/720 HD
@@ -40,23 +39,26 @@ func isImageContentType(contentType string) bool {
 }
 
 type ImagePostHandler struct {
+	http.Handler
+
 	DB  *gorm.DB
 	ZMQ *zmq.Socket
 }
 
-func (this ImagePostHandler) Serve(ctx *iris.Context) {
+func (this ImagePostHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 	var (
 		albumId *uint64
 	)
 
-	token := ctx.Get("jwt").(*jwt.Token)
+	token := request.Context().Value("jwt").(*jwt.Token)
 	uid, _ := token.Claims.(jwt.MapClaims)["uid"].(json.Number).Int64()
 
-	aid := ctx.Request.PostFormValue("aid")
+	aid := request.PostFormValue("aid")
 	if len(aid) > 0 {
 		aid, err := strconv.ParseUint(aid, 10, 64)
 		if err != nil {
-			ctx.JSON(
+			writeJSONResponse(
+				response,
 				http.StatusBadRequest,
 				newErrorJson("Invalid request parameter 'aid'"),
 			)
@@ -67,7 +69,8 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 		var album Album
 
 		if this.DB.Where(&Album{Id: aid}).First(&album).RecordNotFound() {
-			ctx.JSON(
+			writeJSONResponse(
+				response,
 				http.StatusBadRequest,
 				newErrorJson("Unknown album"),
 			)
@@ -76,8 +79,9 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 		}
 
 		if album.UserId != uint64(uid) {
-			ctx.JSON(
-				http.StatusForbidden,
+			writeJSONResponse(
+				response,
+				http.StatusBadRequest,
 				newErrorJson("It's not your album"),
 			)
 
@@ -89,7 +93,7 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 	var buff []byte
 
-	link := ctx.Request.PostFormValue("link")
+	link := request.PostFormValue("link")
 	if len(link) > 0 {
 		netClient := http.Client{
 			Timeout: time.Second * 30,
@@ -97,7 +101,8 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 		resp, err := netClient.Get(link)
 		if err != nil {
-			ctx.JSON(
+			writeJSONResponse(
+				response,
 				http.StatusBadRequest,
 				newErrorJson("We cannot request/download image from link"),
 			)
@@ -109,7 +114,8 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 		defer resp.Body.Close()
 
 		if resp.StatusCode != 200 {
-			ctx.JSON(
+			writeJSONResponse(
+				response,
 				http.StatusBadRequest,
 				newErrorJson(
 					fmt.Sprintf("Wrong status code: %d", resp.StatusCode),
@@ -121,7 +127,8 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 		// Can be -1, indicates that the length is unknown
 		if resp.ContentLength > MAX_PHOTO_FILE_SIZE {
-			ctx.JSON(
+			writeJSONResponse(
+				response,
 				http.StatusBadRequest,
 				newErrorJson(
 					fmt.Sprintf(
@@ -137,7 +144,8 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 		contentType := resp.Header.Get("Content-Type")
 		if !isImageContentType(contentType) {
-			ctx.JSON(
+			writeJSONResponse(
+				response,
 				http.StatusBadRequest,
 				newErrorJson(
 					fmt.Sprintf("Wrong content type: %s", contentType),
@@ -149,7 +157,8 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 		buff, err = ioutil.ReadAll(resp.Body)
 		if err != nil {
-			ctx.JSON(
+			writeJSONResponse(
+				response,
 				http.StatusBadRequest,
 				newErrorJson("Cannot read file, it's not correct"),
 			)
@@ -158,9 +167,10 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 			return
 		}
 	} else {
-		multiPartFile, info, err := ctx.Request.FormFile("file")
+		multiPartFile, info, err := request.FormFile("file")
 		if err != nil {
-			ctx.JSON(
+			writeJSONResponse(
+				response,
 				http.StatusBadRequest,
 				newErrorJson("We cannot find upload file inside file field"),
 			)
@@ -173,7 +183,8 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 		contentType := info.Header.Get("Content-Type")
 		if !isImageContentType(contentType) {
-			ctx.JSON(
+			writeJSONResponse(
+				response,
 				http.StatusBadRequest,
 				newErrorJson(
 					fmt.Sprintf("Wrong content type: %s", contentType),
@@ -185,7 +196,8 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 		buff, err = ioutil.ReadAll(multiPartFile)
 		if err != nil {
-			ctx.JSON(
+			writeJSONResponse(
+				response,
 				http.StatusBadRequest,
 				newErrorJson("Cannot read file, it's not correct"),
 			)
@@ -196,7 +208,8 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 	}
 
 	if len(buff) > MAX_PHOTO_FILE_SIZE {
-		ctx.JSON(
+		writeJSONResponse(
+			response,
 			http.StatusBadRequest,
 			newErrorJson(
 				fmt.Sprintf(
@@ -212,11 +225,10 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 	imageBox, err := NewImageFromByteSlice(buff)
 	if err != nil {
-		ctx.JSON(
+		writeJSONResponse(
+			response,
 			http.StatusBadRequest,
-			newErrorJson(
-				"Uploaded Image is not correct",
-			),
+			newErrorJson("Uploaded Image is not correct"),
 		)
 
 		log.Print(err)
@@ -225,7 +237,8 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 	defer imageBox.Destroy()
 
 	if imageBox.Width > MAX_PHOTO_WIDTH || imageBox.Height > MAX_PHOTO_HEIGHT {
-		ctx.JSON(
+		writeJSONResponse(
+			response,
 			http.StatusBadRequest,
 			newErrorJson(
 				fmt.Sprintf("Image is too large, max %dx%d", MAX_PHOTO_WIDTH, MAX_PHOTO_HEIGHT),
@@ -236,7 +249,8 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 	}
 
 	if imageBox.Width < MIN_PHOTO_WIDTH || imageBox.Height < MIN_PHOTO_HEIGHT {
-		ctx.JSON(
+		writeJSONResponse(
+			response,
 			http.StatusBadRequest,
 			newErrorJson(
 				fmt.Sprintf("Image is too small, min %dx%d", MIN_PHOTO_WIDTH, MIN_PHOTO_HEIGHT),
@@ -271,11 +285,10 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 	err = imageBox.SetImageInterlaceScheme(imagick.INTERLACE_JPEG)
 	if err != nil {
-		ctx.JSON(
+		writeJSONResponse(
+			response,
 			http.StatusBadRequest,
-			newErrorJson(
-				"Sorry, but We cannot proccess your image",
-			),
+			newErrorJson("Sorry, but We cannot proccess your image"),
 		)
 
 		return
@@ -283,11 +296,10 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 	err = imageBox.SetImageInterpolateMethod(imagick.INTERPOLATE_PIXEL_BACKGROUND)
 	if err != nil {
-		ctx.JSON(
+		writeJSONResponse(
+			response,
 			http.StatusBadRequest,
-			newErrorJson(
-				"Sorry, but We cannot proccess your image",
-			),
+			newErrorJson("Sorry, but We cannot proccess your image"),
 		)
 
 		return
@@ -296,8 +308,8 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 	// We should resize photo "big photo" if it's bigger then MAX_BIG_PHOTO dimensions
 	imageBox.MaxDimensionResize(MAX_BIG_PHOTO_WIDHT, MAX_BIG_PHOTO_HEIGHT)
 
-	bigWidth := imageBox.Width;
-	bigHeight := imageBox.Height;
+	bigWidth := imageBox.Width
+	bigHeight := imageBox.Height
 
 	photo := Photo{
 		Id:           photoId,
@@ -334,12 +346,12 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 				half,
 				0,
 			)
+
 			if err != nil {
-				ctx.JSON(
+				writeJSONResponse(
+					response,
 					http.StatusBadRequest,
-					newErrorJson(
-						"Sorry, but We cannot proccess your image",
-					),
+					newErrorJson("Sorry, but We cannot proccess your image"),
 				)
 
 				log.Print(err)
@@ -356,12 +368,12 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 				0,
 				half,
 			)
+
 			if err != nil {
-				ctx.JSON(
+				writeJSONResponse(
+					response,
 					http.StatusBadRequest,
-					newErrorJson(
-						"Sorry, but We cannot proccess your image",
-					),
+					newErrorJson("Sorry, but We cannot proccess your image"),
 				)
 
 				log.Print(err)
@@ -371,11 +383,10 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 		err = imageBox.ThumbnailImage(imgDim.Width, imgDim.Height)
 		if err != nil {
-			ctx.JSON(
+			writeJSONResponse(
+				response,
 				http.StatusBadRequest,
-				newErrorJson(
-					"Sorry, but We cannot proccess your image",
-				),
+				newErrorJson("Sorry, but We cannot proccess your image"),
 			)
 
 			log.Print(err)
@@ -384,7 +395,7 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 
 		uploadThumbnailChannel <- ImageUploadTask{
 			Buffer: imageBox.GetImageBlob(),
-			Path:   "thumbs/" + fmt.Sprintf(
+			Path: "thumbs/" + fmt.Sprintf(
 				"%dx%d/%s/%dx%d_%d_%d.jpg",
 				imgDim.Width,
 				imgDim.Height,
@@ -397,7 +408,8 @@ func (this ImagePostHandler) Serve(ctx *iris.Context) {
 		}
 	}
 
-	ctx.JSON(
+	writeJSONResponse(
+		response,
 		http.StatusOK,
 		photo.getApiData(),
 	)

@@ -1,54 +1,53 @@
 package main
 
 import (
+	"context"
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/kataras/iris"
+	"net/http"
 )
 
-func createJWTMiddelWare(config JWTConfig) iris.HandlerFunc {
+type JWTMiddelware struct {
+	SecretKey string
+	Parser    *jwt.Parser
+}
 
-	return iris.HandlerFunc(func(ctx *iris.Context) {
-		authToken := ctx.RequestHeader("X-AUTH-TOKEN")
-		if authToken == "" {
-			ctx.JSON(
-				iris.StatusForbidden,
-				newErrorJson("You should pass X-AUTH-TOKEN in Headers"),
-			)
-			return
-		}
-
-		parser := &jwt.Parser{
+func NewJWT(key string) *JWTMiddelware {
+	return &JWTMiddelware{
+		SecretKey: key,
+		Parser: &jwt.Parser{
 			UseJSONNumber: true,
-		}
+		},
+	}
+}
 
-		parsedToken, err := parser.Parse(authToken, func(token *jwt.Token) (interface{}, error) {
-			// Don't forget to validate the alg is what you expect:
+func (this *JWTMiddelware) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	authToken := r.Header.Get("X-AUTH-TOKEN")
+	if authToken == "" {
+		http.Error(rw, "You should pass X-AUTH-TOKEN in Headers", http.StatusForbidden)
+		return
+	}
 
-			//jwt.SigningMethodHS256.Verify()
-			//if _, ok := token.Method.(*jwt.SigningMethodRS256); !ok {
-			//	return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-			//}
+	parsedToken, err := this.Parser.Parse(authToken, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
 
-			return []byte(config.SecretKey), nil
-		})
+		//jwt.SigningMethodHS256.Verify()
+		//if _, ok := token.Method.(*jwt.SigningMethodRS256); !ok {
+		//	return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		//}
 
-		if err != nil {
-			ctx.JSON(
-				iris.StatusForbidden,
-				newErrorJson("Your X-AUTH-TOKEN is not valid"),
-			)
-			return
-		}
-
-		if !parsedToken.Valid {
-			ctx.JSON(
-				iris.StatusForbidden,
-				newErrorJson("Your X-AUTH-TOKEN is not valid"),
-			)
-			return
-		}
-
-		ctx.Set("jwt", parsedToken)
-		ctx.Next()
+		return []byte(this.SecretKey), nil
 	})
+
+	if err != nil {
+		http.Error(rw, "Your X-AUTH-TOKEN is not valid", http.StatusForbidden)
+		return
+	}
+
+	if !parsedToken.Valid {
+		http.Error(rw, "Your X-AUTH-TOKEN is not valid", http.StatusForbidden)
+		return
+	}
+
+	ctx := context.WithValue(r.Context(), "jwt", parsedToken)
+	next(rw, r.WithContext(ctx))
 }

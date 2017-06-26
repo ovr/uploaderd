@@ -3,13 +3,11 @@ package main
 import (
 	"flag"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/interpals/uploaderd/middleware/logger"
-	"github.com/interpals/uploaderd/middleware/pprof"
-	"github.com/interpals/uploaderd/middleware/recovery"
 	"github.com/jinzhu/gorm"
-	"github.com/kataras/iris"
 	zmq "github.com/pebbe/zmq4"
+	"github.com/urfave/negroni"
 	"gopkg.in/gographics/imagick.v3/imagick" // v3 for 7+
+	"net/http"
 )
 
 type ErrorJsonBody struct {
@@ -106,22 +104,15 @@ func main() {
 	go startUploader(uploadThumbnailChannel, configuration.S3)
 	go startUploader(uploadOriginalChannel, configuration.S3)
 
-	api := iris.New()
+	mux := http.NewServeMux()
 
-	api.Use(logger.New())
-	api.Use(recovery.Handler)
+	mux.Handle("/v1/image", ImagePostHandler{
+		DB:  db,
+		ZMQ: zmqClient,
+	})
 
-	pprof := pprof.New()
-	api.Get("/debug/pprof/*action", pprof)
-	api.Handle(
-		"POST",
-		"/v1/image",
-		createJWTMiddelWare(configuration.JWT),
-		ImagePostHandler{
-			DB:  db,
-			ZMQ: zmqClient,
-		},
-	)
+	n := negroni.New(negroni.NewRecovery(), negroni.NewLogger(), NewJWT(configuration.JWT.SecretKey))
+	n.UseHandler(mux)
 
-	api.Listen(":8989")
+	http.ListenAndServe(":8989", n)
 }
