@@ -410,7 +410,7 @@ func (this ImagePostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 
 	writeJSONResponse(
 		response,
-		http.StatusOK,
+		http.StatusCreated,
 		photo.getApiData(),
 	)
 }
