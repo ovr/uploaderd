@@ -1,7 +1,7 @@
 version: '2'
 
 services:
-  wsd:
+  uploaderd:
     build: .
     environment:
       NEWRELIC_LICENSE_KEY: ${NEWRELIC_LICENSE_KEY}
