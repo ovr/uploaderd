@@ -4,6 +4,7 @@ MAINTAINER Patsura Dmitry <talk@dmtry.me>
 
 ENV PATH /go/bin:/usr/local/go/bin:$PATH
 ENV GOPATH /go
+ENV IMAGEMAGICK_VERSION 7.0.6-0
 
 RUN mkdir -p /etc/confd/{conf.d,templates}
 RUN mkdir -p /etc/interpals
@@ -23,19 +24,17 @@ RUN apt-get update \
         ca-certificates \
         git \
         curl \
-        wget \
         libzmq3-dev \
         libjpeg-dev \
         libpng-dev \
         libgif-dev \
-    && wget http://www.imagemagick.org/download/ImageMagick-7.0.6-0.tar.gz \
-    && tar xvzf ImageMagick-7.0.6-0.tar.gz \
-    && rm ImageMagick-*.tar.gz \
+    && curl -o ImageMagick.tar.gz http://www.imagemagick.org/download/ImageMagick-$IMAGEMAGICK_VERSION.tar.gz \
+    && tar xvzf ImageMagick.tar.gz && rm ImageMagick.tar.gz \
     && cd ImageMagick-* && ./configure && make && make install && ldconfig /usr/local/lib && cd .. \
     && rm -rf ImageMagick-* \
     && curl https://glide.sh/get | sh \
     && glide install \
-    && apt-get remove -y curl wget git \
+    && apt-get remove -y curl git \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
