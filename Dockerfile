@@ -30,7 +30,9 @@ RUN apt-get update \
         libgif-dev \
     && curl -o ImageMagick.tar.gz http://www.imagemagick.org/download/ImageMagick-$IMAGEMAGICK_VERSION.tar.gz \
     && tar xvzf ImageMagick.tar.gz && rm ImageMagick.tar.gz \
-    && cd ImageMagick-* && ./configure && make && make install && ldconfig /usr/local/lib && cd .. \
+    && cd ImageMagick-* \
+    && ./configure --without-magick-plus-plus \
+    && make && make install && ldconfig /usr/local/lib && cd .. \
     && rm -rf ImageMagick-* \
     && curl https://glide.sh/get | sh \
     && glide install \
