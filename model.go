@@ -28,6 +28,14 @@ type Photo struct {
 	Hidden       bool      `gorm:"column:hidden" json:"-"`
 }
 
+type Audio struct {
+	Id       uint64    `gorm:"column:id" json:"id,string"`
+	UserId   uint64    `gorm:"column:uid" json:"uid,string"`
+	FileName string    `gorm:"column:file_name" json:"path"`
+	Size     uint      `gorm:"column:size" json:"size"`
+	Created  time.Time `gorm:"column:created" json:"created"`
+}
+
 // @todo Will be used in the feature
 func (this Photo) getApiData() Photo {
 	return this
