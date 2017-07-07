@@ -25,6 +25,9 @@ RUN apt-get update \
         curl \
         wget \
         libzmq3-dev \
+        libjpeg-dev \
+        libpng-dev \
+        libgif-dev \
     && wget http://www.imagemagick.org/download/ImageMagick-7.0.6-0.tar.gz \
     && tar xvzf ImageMagick-7.0.6-0.tar.gz \
     && rm ImageMagick-7.0.6-0.tar.gz \
