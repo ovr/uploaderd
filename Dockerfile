@@ -30,8 +30,9 @@ RUN apt-get update \
         libgif-dev \
     && wget http://www.imagemagick.org/download/ImageMagick-7.0.6-0.tar.gz \
     && tar xvzf ImageMagick-7.0.6-0.tar.gz \
-    && rm ImageMagick-7.0.6-0.tar.gz \
+    && rm ImageMagick-*.tar.gz \
     && cd ImageMagick-* && ./configure && make && make install && ldconfig /usr/local/lib && cd .. \
+    && rm -rf ImageMagick-* \
     && curl https://glide.sh/get | sh \
     && glide install \
     && apt-get remove -y curl wget git \
