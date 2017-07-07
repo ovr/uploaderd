@@ -28,6 +28,12 @@ RUN apt-get update \
         libjpeg-dev \
         libpng-dev \
         libgif-dev \
+        yasm \
+        bzip2 \
+    && curl -o ffmpeg-3.3.2.tar.bz2 http://ffmpeg.org/releases/ffmpeg-3.3.2.tar.bz2 \
+    && tar xvjf ffmpeg-3.3.2.tar.bz2 && rm ffmpeg-3.3.2.tar.bz2 \
+    && cd ffmpeg-3.3.2 && ./configure && make && make install && ldconfig /usr/local/lib && cd .. \
+    && rm -rf ffmpeg-3.3.2 \
     && curl -o ImageMagick.tar.gz https://codeload.github.com/ImageMagick/ImageMagick/tar.gz/$IMAGEMAGICK_VERSION \
     && tar xvzf ImageMagick.tar.gz && rm ImageMagick.tar.gz \
     && cd ImageMagick-* \
@@ -36,7 +42,7 @@ RUN apt-get update \
     && rm -rf ImageMagick-* \
     && curl https://glide.sh/get | sh \
     && glide install \
-    && apt-get remove -y curl git \
+    && apt-get remove -y curl git bzip2 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
