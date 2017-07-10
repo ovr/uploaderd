@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	zmq "github.com/pebbe/zmq4"
+	"log"
 	"strconv"
 	"sync"
 )
@@ -33,13 +35,20 @@ func tryUUID(client *zmq.Socket) (uint64, error) {
 	return res, nil
 }
 
+const TRIES_COUNT = 5
+
 func generateUUID(client *zmq.Socket) uint64 {
-	for i := 0; i < 5; i++ {
+	var err error
+
+	for i := 0; i < TRIES_COUNT; i++ {
 		res, err := tryUUID(client)
 		if err == nil {
 			return res
+		} else {
+			// Log error and give a new try
+			log.Println(err.Error())
 		}
 	}
 
-	panic("Cannot generate UUID after N tries")
+	panic(fmt.Sprintf("Cannot generate UUID after %d tries (%s)", TRIES_COUNT, err.Error()))
 }
