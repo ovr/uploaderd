@@ -39,25 +39,27 @@ func NewUUIDGenerator(endpoint string) *UUIDGenerator {
 
 func (this *UUIDGenerator) Listen() {
 	for {
-		var err error
-
-		for i := 0; i < TRIES_COUNT; i++ {
-			res, err := this.tryUUID()
-			if err == nil {
-				this.recv <- res
-
-				log.Println("Next UUID ", res)
-
-				// next loop
-				continue
-			} else {
-				// Log error and give a new try
-				log.Println(err.Error())
-			}
-		}
-
-		panic(fmt.Sprintf("Cannot generate UUID after %d tries (%s)", TRIES_COUNT, err.Error()))
+		this.recvUUID()
 	}
+}
+
+func (this *UUIDGenerator) recvUUID() {
+	var err error
+
+	for i := 0; i < TRIES_COUNT; i++ {
+		res, err := this.tryUUID()
+		if err == nil {
+			this.recv <- res
+
+			log.Println("Next UUID ", res)
+			return
+		} else {
+			// Log error and give a new try
+			log.Println(err.Error())
+		}
+	}
+
+	panic(fmt.Sprintf("Cannot generate UUID after %d tries (%s)", TRIES_COUNT, err.Error()))
 }
 
 func (this *UUIDGenerator) tryUUID() (uint64, error) {
