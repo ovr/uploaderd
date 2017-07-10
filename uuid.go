@@ -5,6 +5,7 @@ import (
 	zmq "github.com/pebbe/zmq4"
 	"log"
 	"strconv"
+	"time"
 )
 
 const TRIES_COUNT = 5
@@ -24,6 +25,9 @@ func NewUUIDGenerator(endpoint string) *UUIDGenerator {
 	if err != nil {
 		panic(err)
 	}
+
+	zmqClient.SetSndtimeo(10 * time.Millisecond)
+	zmqClient.SetRcvtimeo(10 * time.Millisecond)
 
 	client := &UUIDGenerator{
 		client: zmqClient,
