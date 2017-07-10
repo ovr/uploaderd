@@ -31,7 +31,7 @@ type Photo struct {
 type Audio struct {
 	Id       uint64    `gorm:"column:id" json:"id,string"`
 	UserId   uint64    `gorm:"column:uid" json:"uid,string"`
-	FileName string    `gorm:"column:file_name" json:"path"`
+	Path 	 string    `gorm:"column:path" json:"path"`
 	Size     uint      `gorm:"column:size" json:"size"`
 	Created  time.Time `gorm:"column:created" json:"created"`
 }
