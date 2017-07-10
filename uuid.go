@@ -13,6 +13,7 @@ var (
 
 func tryUUID(client *zmq.Socket) (uint64, error) {
 	clientMutex.Lock()
+	defer clientMutex.Unlock()
 
 	_, err := client.SendMessage("GEN")
 	if err != nil {
@@ -23,8 +24,6 @@ func tryUUID(client *zmq.Socket) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-
-	clientMutex.Unlock()
 
 	res, err := strconv.ParseUint(reply[0], 10, 64)
 	if err != nil {
