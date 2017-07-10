@@ -6,7 +6,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"github.com/newrelic/go-agent"
-	zmq "github.com/pebbe/zmq4"
 	"github.com/urfave/negroni"
 	"gopkg.in/gographics/imagick.v3/imagick" // v3 for 7+
 	"net/http"
@@ -86,16 +85,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	zmqClient, err := zmq.NewSocket(zmq.REQ)
-	if err != nil {
-		panic(err)
-	}
-
-	err = zmqClient.Connect(configuration.CruftFlake.Uri)
-	if err != nil {
-		panic(err)
-	}
-
 	imagick.Initialize() // LOAD ONLY ONCE, because DEAD LOCK!! @ovr
 	defer imagick.Terminate()
 
@@ -116,11 +105,14 @@ func main() {
 	go startUploader(uploadThumbnailChannel, configuration.S3)
 	go startUploader(uploadOriginalChannel, configuration.S3)
 
+	UUIDGenerator := NewUUIDGenerator(configuration.CruftFlake.Uri)
+	go UUIDGenerator.Listen()
+
 	mux := http.NewServeMux()
 
 	mux.Handle(newrelic.WrapHandle(app, "/v1/image", ImagePostHandler{
-		DB:  db,
-		ZMQ: zmqClient,
+		DB:            db,
+		UUIDGenerator: UUIDGenerator,
 	}))
 
 	n := negroni.New(negroni.NewRecovery(), negroni.NewLogger(), NewJWT(configuration.JWT.SecretKey))

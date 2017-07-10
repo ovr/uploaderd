@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
-	zmq "github.com/pebbe/zmq4"
 	"gopkg.in/gographics/imagick.v3/imagick"
 	"io/ioutil"
 	"log"
@@ -41,8 +40,8 @@ func isImageContentType(contentType string) bool {
 type ImagePostHandler struct {
 	http.Handler
 
-	DB  *gorm.DB
-	ZMQ *zmq.Socket
+	DB            *gorm.DB
+	UUIDGenerator *UUIDGenerator
 }
 
 func (this ImagePostHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
@@ -265,7 +264,7 @@ func (this ImagePostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 	hash := hex.EncodeToString(hasher.Sum(nil))
 	hashPathPart := hash[0:2] + "/" + hash[2:4] + "/"
 
-	photoId := generateUUID(this.ZMQ)
+	photoId := this.UUIDGenerator.Get()
 
 	// We should resize photo "original" if it's bigger then MAX_ORIGINAL dimensions
 	imageBox.MaxDimensionResize(MAX_ORIGINAL_PHOTO_WIDTH, MAX_ORIGINAL_PHOTO_HEIGHT)
