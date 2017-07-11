@@ -65,6 +65,7 @@ var (
 )
 
 func main() {
+
 	var (
 		configFile string
 		err        error
@@ -118,6 +119,11 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.Handle(newrelic.WrapHandle(app, "/v1/image", ImagePostHandler{
+		DB:            db,
+		UUIDGenerator: UUIDGenerator,
+	}))
+
+	mux.Handle(newrelic.WrapHandle(app, "/v1/audio", AudioPostHandler{
 		DB:            db,
 		UUIDGenerator: UUIDGenerator,
 	}))

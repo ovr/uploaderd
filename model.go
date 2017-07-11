@@ -1,6 +1,10 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
 	"time"
 )
 
@@ -28,12 +32,35 @@ type Photo struct {
 	Hidden       bool      `gorm:"column:hidden" json:"-"`
 }
 
+type Info struct {
+	Path string `json:"filename"`
+	Size uint64 `json:"size,string"`
+}
+
+type AudioData struct {
+	Data Info `json:"format"`
+}
+
 type Audio struct {
-	Id       uint64    `gorm:"column:id" json:"id,string"`
-	UserId   uint64    `gorm:"column:uid" json:"uid,string"`
-	Path 	 string    `gorm:"column:path" json:"path"`
-	Size     uint      `gorm:"column:size" json:"size"`
-	Created  time.Time `gorm:"column:created" json:"created"`
+	Id      uint64 `gorm:"column:id" json:"id,string"`
+	UserId  uint64 `gorm:"column:uid" json:"uid,string"`
+	Path    string `gorm:"column:path"`
+	Size    uint64 `gorm:"column:size"`
+	Created string `gorm:"column:created" json:"created"`
+}
+
+func (this *AudioData) getAudioData(configFile string) {
+	configJson, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	err = json.Unmarshal(configJson, &this)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
 
 // @todo Will be used in the feature
