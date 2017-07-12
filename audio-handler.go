@@ -9,6 +9,14 @@ import (
 	"os"
 	"os/exec"
 	"time"
+	"io/ioutil"
+	zmq "github.com/pebbe/zmq4"
+	"crypto/md5"
+	"encoding/hex"
+)
+
+const (
+	MAX_AUDIO_FILE_SIZE = 1024 * 1024
 )
 
 func isAudioContentType(contentType string) bool {
@@ -18,44 +26,109 @@ func isAudioContentType(contentType string) bool {
 type AudioPostHandler struct {
 	http.Handler
 
-	DB            *gorm.DB
-	UUIDGenerator *UUIDGenerator
+	DB  *gorm.DB
+	ZMQ *zmq.Socket
 }
 
-func (this *AudioPostHandler) AudioHandler(response http.ResponseWriter, request *http.Request) {
+func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 
 	token := request.Context().Value("jwt").(*jwt.Token)
 	uid, _ := token.Claims.(jwt.MapClaims)["uid"].(json.Number).Int64()
 
-	out := exec.Command("ffprobe", "-print_format", "json", "-show_entries", "format=size,filename", "file.mp3")
+	var buff []byte
+
+	multiPartFile, audioInfo, err := request.FormFile("file")
+	if err != nil {
+		writeJSONResponse(
+			response,
+			http.StatusBadRequest,
+			newErrorJson("We cannot find upload file inside file field"),
+		)
+
+		return
+	}
+
+	defer multiPartFile.Close()
+
+	contentType := audioInfo.Header.Get("Content-Type")
+	if !isAudioContentType(contentType) {
+		writeJSONResponse(
+			response,
+			http.StatusBadRequest,
+			newErrorJson(
+				fmt.Sprintf("Wrong content type: %s", contentType),
+			),
+		)
+
+		return
+	}
+
+	buff, err = ioutil.ReadAll(multiPartFile)
+	if err != nil {
+		writeJSONResponse(
+			response,
+			http.StatusBadRequest,
+			newErrorJson("Cannot read file"))
+
+		return
+	}
+
+	if len(buff) > MAX_AUDIO_FILE_SIZE {
+		writeJSONResponse(
+			response,
+			http.StatusBadRequest,
+			newErrorJson(
+				fmt.Sprintf(
+					"File is too big, actual: %d, max: %d",
+					len(buff),
+					MAX_AUDIO_FILE_SIZE,
+				),
+			),
+		)
+
+		return
+	}
+
+	// TODO: Move args to config ?
+	file := exec.Command("ffprobe", "-print_format", "json", "-show_entries", "format=size,filename", audioInfo.Filename)
 
 	// open the out file for writing
-	outfile, err := os.Create("./out.json")
+	outfile, err := os.Create("./audio_data.json")
 	if err != nil {
 		panic(err)
 	}
 	defer outfile.Close()
-	out.Stdout = outfile
+	file.Stdout = outfile
 
-	err = out.Start()
+	err = file.Start()
 	if err != nil {
 		panic(err)
 	}
-	out.Wait()
+	file.Wait()
 
 	audioData := &AudioData{}
-	audioData.getAudioData("./out.json")
+	audioData.getAudioData("./audio_data.json")
 
-	fmt.Println(audioData.Data.Path)
-	fmt.Println(audioData.Data.Size)
+	// TODO: btw, extract to utils ?
+	hasher := md5.New()
+	hasher.Write(buff)
+	hash := hex.EncodeToString(hasher.Sum(nil))
+	hashPathPart := hash[0:2] + "/" + hash[2:4] + "/"
+
+	audioId := generateUUID(this.ZMQ)
 
 	audio := Audio{
-		Id:      this.UUIDGenerator.Get(),
+		Id:      audioId,
 		UserId:  uint64(uid),
 		Size:    audioData.Data.Size,
-		Path:    audioData.Data.Path,
+		Path:    hashPathPart + fmt.Sprintf("%s_%d_%d", audioInfo.Filename, uid, audioId),
 		Created: time.Now().Format(time.RFC3339),
 	}
+	go this.DB.Save(audio)
 
-	fmt.Println(audio)
+	writeJSONResponse(
+		response,
+		http.StatusCreated,
+		audio.getApiData(),
+	)
 }

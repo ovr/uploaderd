@@ -124,8 +124,8 @@ func main() {
 	}))
 
 	mux.Handle(newrelic.WrapHandle(app, "/v1/audio", AudioPostHandler{
-		DB:            db,
-		UUIDGenerator: UUIDGenerator,
+		DB:  db,
+		ZMQ: zmqClient,
 	}))
 
 	n := negroni.New(negroni.NewRecovery(), negroni.NewLogger(), NewJWT(configuration.JWT.SecretKey))

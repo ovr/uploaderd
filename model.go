@@ -67,3 +67,7 @@ func (this *AudioData) getAudioData(configFile string) {
 func (this Photo) getApiData() Photo {
 	return this
 }
+
+func (this Audio) getApiData() Audio {
+	return this
+}
