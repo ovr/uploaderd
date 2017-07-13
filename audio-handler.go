@@ -6,13 +6,12 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
 	"net/http"
-	"os"
-	"os/exec"
 	"time"
 	"io/ioutil"
 	zmq "github.com/pebbe/zmq4"
 	"crypto/md5"
 	"encoding/hex"
+	"os/exec"
 )
 
 const (
@@ -89,25 +88,20 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		return
 	}
 
-	// TODO: Move args to config ?
-	file := exec.Command("ffprobe", "-print_format", "json", "-show_entries", "format=size,filename", audioInfo.Filename)
+	audioId := generateUUID(this.ZMQ)
 
-	// open the out file for writing
-	outfile, err := os.Create("./audio_data.json")
-	if err != nil {
-		panic(err)
-	}
-	defer outfile.Close()
-	file.Stdout = outfile
-
-	err = file.Start()
-	if err != nil {
-		panic(err)
-	}
-	file.Wait()
-
-	audioData := &AudioData{}
-	audioData.getAudioData("./audio_data.json")
+	// ffmpeg -i file.mp3 -c:a aac -b:a 128k -ac 1 output.aac
+	exec.Command(
+		"ffmpeg",
+		"-i",
+		audioInfo.Filename,
+		"-c:a",
+		"aac",
+		"-b:a",
+		"128k",
+		"-ac",
+		"1",
+	)
 
 	// TODO: btw, extract to utils ?
 	hasher := md5.New()
@@ -115,13 +109,11 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 	hash := hex.EncodeToString(hasher.Sum(nil))
 	hashPathPart := hash[0:2] + "/" + hash[2:4] + "/"
 
-	audioId := generateUUID(this.ZMQ)
-
 	audio := Audio{
 		Id:      audioId,
 		UserId:  uint64(uid),
-		Size:    audioData.Data.Size,
-		Path:    hashPathPart + fmt.Sprintf("%s_%d_%d", audioInfo.Filename, uid, audioId),
+		Size:    len(buff),
+		Path:    hashPathPart + fmt.Sprintf("%d_%d_%s", uid, audioId, audioInfo.Filename),
 		Created: time.Now().Format(time.RFC3339),
 	}
 	go this.DB.Save(audio)
