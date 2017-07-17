@@ -44,14 +44,17 @@ func (this *UUIDGenerator) Listen() {
 }
 
 func (this *UUIDGenerator) recvUUID() {
-	var err error
+	var (
+		err    error
+		result uint64
+	)
 
 	for i := 0; i < TRIES_COUNT; i++ {
-		res, err := this.tryUUID()
+		result, err = this.tryUUID()
 		if err == nil {
-			this.recv <- res
+			this.recv <- result
 
-			log.Println("Next UUID ", res)
+			log.Println("Next UUID ", result)
 			return
 		} else {
 			// Log error and give a new try
