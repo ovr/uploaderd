@@ -16,7 +16,7 @@ type UUIDGenerator struct {
 }
 
 func NewUUIDGenerator(endpoint string) *UUIDGenerator {
-	zmqClient, err := zmq.NewSocket(zmq.DEALER)
+	zmqClient, err := zmq.NewSocket(zmq.REQ)
 	if err != nil {
 		panic(err)
 	}
@@ -26,6 +26,7 @@ func NewUUIDGenerator(endpoint string) *UUIDGenerator {
 		panic(err)
 	}
 
+	zmqClient.SetLinger(0)
 	zmqClient.SetSndtimeo(10 * time.Millisecond)
 	zmqClient.SetRcvtimeo(10 * time.Millisecond)
 
