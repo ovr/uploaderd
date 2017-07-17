@@ -4,7 +4,7 @@ MAINTAINER Patsura Dmitry <talk@dmtry.me>
 
 ENV PATH /go/bin:/usr/local/go/bin:$PATH
 ENV GOPATH /go
-ENV IMAGEMAGICK_VERSION 7.0.6-0
+ENV IMAGEMAGICK_VERSION 7.0.6-1
 
 RUN mkdir -p /etc/confd/{conf.d,templates}
 RUN mkdir -p /etc/interpals
