@@ -9,8 +9,6 @@ import (
 	"time"
 	"io/ioutil"
 	zmq "github.com/pebbe/zmq4"
-	"crypto/md5"
-	"encoding/hex"
 	"os/exec"
 )
 
@@ -90,7 +88,6 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 
 	audioId := generateUUID(this.ZMQ)
 
-	// ffmpeg -i file.mp3 -c:a aac -b:a 128k -ac 1 output.aac
 	exec.Command(
 		"ffmpeg",
 		"-i",
@@ -103,17 +100,11 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		"1",
 	)
 
-	// TODO: btw, extract to utils ?
-	hasher := md5.New()
-	hasher.Write(buff)
-	hash := hex.EncodeToString(hasher.Sum(nil))
-	hashPathPart := hash[0:2] + "/" + hash[2:4] + "/"
-
 	audio := Audio{
 		Id:      audioId,
 		UserId:  uint64(uid),
 		Size:    len(buff),
-		Path:    hashPathPart + fmt.Sprintf("%d_%d_%s", uid, audioId, audioInfo.Filename),
+		Path:    getHashPath(buff) + fmt.Sprintf("%d_%d_%s", uid, audioId, audioInfo.Filename),
 		Created: time.Now().Format(time.RFC3339),
 	}
 	go this.DB.Save(audio)
