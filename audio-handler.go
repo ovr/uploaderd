@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	zmq "github.com/pebbe/zmq4"
 	"os/exec"
+	"strings"
 )
 
 const (
@@ -88,23 +89,31 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 
 	audioId := generateUUID(this.ZMQ)
 
+	fileName := fmt.Sprintf("%d_%d_%s.mp3", uid, audioId, strings.TrimRight(audioInfo.Filename, ".aac"))
+
 	exec.Command(
 		"ffmpeg",
 		"-i",
 		audioInfo.Filename,
 		"-c:a",
-		"aac",
+		"libmp3lame",
 		"-b:a",
-		"128k",
+		"32k",
 		"-ac",
 		"1",
-	)
+		fileName,
+	).Run()
+
+	formattedFile, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		panic(err)
+	}
 
 	audio := Audio{
 		Id:      audioId,
 		UserId:  uint64(uid),
-		Size:    len(buff),
-		Path:    getHashPath(buff) + fmt.Sprintf("%d_%d_%s", uid, audioId, audioInfo.Filename),
+		Size:    len(formattedFile),
+		Path:    getHashPath(buff) + fmt.Sprintf("%s", fileName),
 		Created: time.Now(),
 	}
 	go this.DB.Save(audio)
