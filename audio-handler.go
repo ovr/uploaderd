@@ -105,7 +105,7 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		UserId:  uint64(uid),
 		Size:    len(buff),
 		Path:    getHashPath(buff) + fmt.Sprintf("%d_%d_%s", uid, audioId, audioInfo.Filename),
-		Created: time.Now().Format(time.RFC3339),
+		Created: time.Now(),
 	}
 	go this.DB.Save(audio)
 
