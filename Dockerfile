@@ -28,7 +28,7 @@ RUN apt-get update \
         libjpeg-dev \
         libpng-dev \
         libgif-dev \
-    && curl -o ImageMagick.tar.gz https://github.com/ImageMagick/ImageMagick/archive/$IMAGEMAGICK_VERSION.tar.gz \
+    && curl -o ImageMagick.tar.gz https://codeload.github.com/ImageMagick/ImageMagick/tar.gz/$IMAGEMAGICK_VERSION \
     && tar xvzf ImageMagick.tar.gz && rm ImageMagick.tar.gz \
     && cd ImageMagick-* \
     && ./configure --without-magick-plus-plus \
