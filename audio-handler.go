@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
-	"net/http"
-	"time"
-	"io/ioutil"
 	zmq "github.com/pebbe/zmq4"
+	"io/ioutil"
+	"net/http"
 	"os/exec"
+	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -93,26 +94,28 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		return
 	}
 
-	audioLength, err := exec.Command(
+	cmd, err := exec.Command(
 		"ffprobe",
 		"-i",
 		audioInfo.Filename,
-		"-show_entries",
-		"format=",
-		"duration",
 		"-v",
 		"quiet",
+		"-show_entries",
+		"format=duration",
 		"-of",
-		"csv=",
-		"p=",
-		"0",
+		"default=noprint_wrappers=1:nokey=1",
 	).Output()
 
 	if err != nil {
 		panic(err)
 	}
 
-	if int(audioLength) > MAX_AUDIO_LENGTH {
+	audioDuration, err := strconv.ParseFloat(strings.Trim(string(cmd), "\n"), 32)
+	if err != nil {
+		panic(err)
+	}
+
+	if audioDuration > MAX_AUDIO_LENGTH {
 		writeJSONResponse(
 			response,
 			http.StatusBadRequest,
@@ -170,7 +173,7 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 
 	uploadOriginalAudioChannel <- AudioUploadTask{
 		Buffer: formattedFile,
-		Path: "audios/" + getHashPath(buff) + fmt.Sprintf("%s", fileName),
+		Path:   "audios/" + getHashPath(buff) + fmt.Sprintf("%s", fileName),
 	}
 
 	writeJSONResponse(
