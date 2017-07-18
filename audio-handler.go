@@ -11,10 +11,18 @@ import (
 	zmq "github.com/pebbe/zmq4"
 	"os/exec"
 	"strings"
+	"bytes"
+	"encoding/binary"
 )
 
 const (
-	MAX_AUDIO_FILE_SIZE = 1024 * 1024
+	MAX_AUDIO_FILE_SIZE = 1024 * 1024 * 3
+
+	// 1 Mb - max original audio size that we store
+	MAX_ORIGINAL_FILE_SIZE = 1024 * 1024
+
+	// 5 min + 10 sec buff
+	MAX_AUDIO_LENGTH = 310
 )
 
 func isAudioContentType(contentType string) bool {
@@ -87,6 +95,35 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		return
 	}
 
+	audioLength, err := exec.Command(
+		"ffprobe",
+		"-i",
+		audioInfo.Filename,
+		"-show_entries",
+		"format=",
+		"duration",
+		"-v",
+		"quiet",
+		"-of",
+		"csv=",
+		"p=",
+		"0",
+	).Output()
+
+	if err != nil {
+		panic(err)
+	}
+
+	if int(audioLength) > MAX_AUDIO_LENGTH {
+		writeJSONResponse(
+			response,
+			http.StatusBadRequest,
+			newErrorJson("File length is too big"),
+		)
+
+		return
+	}
+
 	audioId := generateUUID(this.ZMQ)
 
 	fileName := fmt.Sprintf("%d_%d_%s.mp3", uid, audioId, strings.TrimRight(audioInfo.Filename, ".aac"))
@@ -109,10 +146,25 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		panic(err)
 	}
 
+	if len(formattedFile) > MAX_ORIGINAL_FILE_SIZE {
+		writeJSONResponse(
+			response,
+			http.StatusBadRequest,
+			newErrorJson(
+				fmt.Sprintf(
+					"File is too big, actual: %d, max: %d",
+					len(buff),
+					MAX_ORIGINAL_FILE_SIZE,
+				),
+			),
+		)
+
+		return
+	}
+
 	audio := Audio{
 		Id:      audioId,
 		UserId:  uint64(uid),
-		Size:    len(formattedFile),
 		Path:    getHashPath(buff) + fmt.Sprintf("%s", fileName),
 		Created: time.Now(),
 	}

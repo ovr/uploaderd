@@ -32,7 +32,6 @@ type Audio struct {
 	Id      uint64    `gorm:"column:id" json:"id,string"`
 	UserId  uint64    `gorm:"column:uid" json:"uid,string"`
 	Path    string    `gorm:"column:path" json:"path"`
-	Size    int       `gorm:"column:size" json:"size"`
 	Created time.Time `gorm:"column:created" json:"created"`
 }
 
