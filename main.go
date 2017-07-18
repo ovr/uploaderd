@@ -39,6 +39,12 @@ type ImageUploadTask struct {
 	Path   string
 }
 
+type AudioUploadTask struct {
+	// Array in slice, in-memory file
+	Buffer []byte
+	Path   string
+}
+
 var (
 	resizeImageDimmention []ImageDim = []ImageDim{
 		ImageDim{
@@ -62,6 +68,7 @@ var (
 	// upload to S3 channel
 	uploadThumbnailChannel chan ImageUploadTask
 	uploadOriginalChannel  chan ImageUploadTask
+	uploadOriginalAudioChannel chan AudioUploadTask
 )
 
 func main() {
@@ -98,6 +105,7 @@ func main() {
 
 	uploadThumbnailChannel = make(chan ImageUploadTask, configuration.S3.UploadThumbnailChannelSize)
 	uploadOriginalChannel = make(chan ImageUploadTask, configuration.S3.UploadOriginalChannelSize)
+	uploadOriginalAudioChannel = make(chan AudioUploadTask, configuration.S3.UploadOriginalChannelSize)
 
 	db, err := gorm.Open(configuration.DB.Dialect, configuration.DB.Uri)
 	if err != nil {
@@ -112,6 +120,7 @@ func main() {
 
 	go startUploader(uploadThumbnailChannel, configuration.S3)
 	go startUploader(uploadOriginalChannel, configuration.S3)
+	go startAudioUploader(uploadOriginalAudioChannel, configuration.S3)
 
 	UUIDGenerator := NewUUIDGenerator(configuration.CruftFlake.Uri)
 	go UUIDGenerator.Listen()

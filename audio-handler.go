@@ -11,8 +11,6 @@ import (
 	zmq "github.com/pebbe/zmq4"
 	"os/exec"
 	"strings"
-	"bytes"
-	"encoding/binary"
 )
 
 const (
@@ -169,6 +167,11 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		Created: time.Now(),
 	}
 	go this.DB.Save(audio)
+
+	uploadOriginalAudioChannel <- AudioUploadTask{
+		Buffer: formattedFile,
+		Path: "audios/" + getHashPath(buff) + fmt.Sprintf("%s", fileName),
+	}
 
 	writeJSONResponse(
 		response,
