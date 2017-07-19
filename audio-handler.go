@@ -70,13 +70,29 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 
 	buff, err := os.Create("/tmp/" + audioInfo.Filename)
 	if err != nil {
-		panic(err)
+		writeJSONResponse(
+			response,
+			http.StatusInternalServerError,
+			newErrorJson(
+				fmt.Sprintf("Cannot create audio file %s", audioInfo.Filename),
+			),
+		)
+
+		return
 	}
 	defer buff.Close()
 
 	_, err = io.Copy(buff, multiPartFile)
 	if err != nil {
-		panic(err)
+		writeJSONResponse(
+			response,
+			http.StatusInternalServerError,
+			newErrorJson(
+				fmt.Sprintf("Cannot save audio file %s", audioInfo.Filename),
+			),
+		)
+
+		return
 	}
 
 	rawFile, err := ioutil.ReadAll(buff)
@@ -84,7 +100,10 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		writeJSONResponse(
 			response,
 			http.StatusBadRequest,
-			newErrorJson("Cannot read file"))
+			newErrorJson(
+				fmt.Sprintf("Cannot read file %s", audioInfo.Filename),
+			),
+		)
 
 		return
 	}
@@ -118,12 +137,26 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 	).Output()
 
 	if err != nil {
-		panic(err)
+		writeJSONResponse(
+			response,
+			http.StatusInternalServerError,
+			newErrorJson(
+				fmt.Sprintf("Cannot process audio file %s via ffprobe", audioInfo.Filename),
+			),
+		)
+
+		return
 	}
 
 	audioDuration, err := strconv.ParseFloat(strings.Trim(string(cmd), "\n"), 32)
 	if err != nil {
-		panic(err)
+		writeJSONResponse(
+			response,
+			http.StatusInternalServerError,
+			newErrorJson(
+				fmt.Sprintf("Error when parse %s", audioInfo.Filename),
+			),
+		)
 	}
 
 	if audioDuration > MAX_AUDIO_LENGTH {
@@ -142,6 +175,8 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 
 	exec.Command(
 		"ffmpeg",
+		"-v",
+		"quiet",
 		"-i",
 		audioInfo.Filename,
 		"-c:a",
@@ -155,7 +190,13 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 
 	formattedFile, err := ioutil.ReadFile(fileName)
 	if err != nil {
-		panic(err)
+		writeJSONResponse(
+			response,
+			http.StatusInternalServerError,
+			newErrorJson(
+				fmt.Sprintf("Cannot read file %s after proccesing via ffmpeg", fileName),
+			),
+		)
 	}
 
 	if len(formattedFile) > MAX_ORIGINAL_FILE_SIZE {
