@@ -12,9 +12,12 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"os"
+	"io"
 )
 
 const (
+	// 3 Mb - max raw audio size that we allow upload
 	MAX_AUDIO_FILE_SIZE = 1024 * 1024 * 3
 
 	// 1 Mb - max original audio size that we store
@@ -40,8 +43,6 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 	token := request.Context().Value("jwt").(*jwt.Token)
 	uid, _ := token.Claims.(jwt.MapClaims)["uid"].(json.Number).Int64()
 
-	var buff []byte
-
 	multiPartFile, audioInfo, err := request.FormFile("file")
 	if err != nil {
 		writeJSONResponse(
@@ -52,7 +53,6 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 
 		return
 	}
-
 	defer multiPartFile.Close()
 
 	contentType := audioInfo.Header.Get("Content-Type")
@@ -68,7 +68,18 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		return
 	}
 
-	buff, err = ioutil.ReadAll(multiPartFile)
+	buff, err := os.Create("/tmp/" + audioInfo.Filename)
+	if err != nil {
+		panic(err)
+	}
+	defer buff.Close()
+
+	_, err = io.Copy(buff, multiPartFile)
+	if err != nil {
+		panic(err)
+	}
+
+	rawFile, err := ioutil.ReadAll(buff)
 	if err != nil {
 		writeJSONResponse(
 			response,
@@ -78,14 +89,14 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		return
 	}
 
-	if len(buff) > MAX_AUDIO_FILE_SIZE {
+	if len(rawFile) > MAX_AUDIO_FILE_SIZE {
 		writeJSONResponse(
 			response,
 			http.StatusBadRequest,
 			newErrorJson(
 				fmt.Sprintf(
 					"File is too big, actual: %d, max: %d",
-					len(buff),
+					len(rawFile),
 					MAX_AUDIO_FILE_SIZE,
 				),
 			),
@@ -154,7 +165,7 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 			newErrorJson(
 				fmt.Sprintf(
 					"File is too big, actual: %d, max: %d",
-					len(buff),
+					len(formattedFile),
 					MAX_ORIGINAL_FILE_SIZE,
 				),
 			),
@@ -166,14 +177,14 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 	audio := Audio{
 		Id:      audioId,
 		UserId:  uint64(uid),
-		Path:    getHashPath(buff) + fmt.Sprintf("%s", fileName),
+		Path:    getHashPath(formattedFile) + fmt.Sprintf("%s", fileName),
 		Created: time.Now(),
 	}
 	go this.DB.Save(audio)
 
 	uploadOriginalAudioChannel <- AudioUploadTask{
 		Buffer: formattedFile,
-		Path:   "audios/" + getHashPath(buff) + fmt.Sprintf("%s", fileName),
+		Path:   "audios/" + getHashPath(formattedFile) + fmt.Sprintf("%s", fileName),
 	}
 
 	writeJSONResponse(

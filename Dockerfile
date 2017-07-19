@@ -4,7 +4,7 @@ MAINTAINER Patsura Dmitry <talk@dmtry.me>
 
 ENV PATH /go/bin:/usr/local/go/bin:/usr/bin$PATH
 ENV GOPATH /go
-ENV PKG_CONFIG_PATH /ffmpeg_build/lib/pkgconfig:$PKG_CONFIG_PATH
+ENV PKG_CONFIG_PATH /usr/local/ffmpeg_build/lib/pkgconfig:$PKG_CONFIG_PATH
 ENV IMAGEMAGICK_VERSION 7.0.6-1
 
 RUN mkdir -p /etc/confd/{conf.d,templates}
@@ -43,19 +43,17 @@ RUN apt-get update \
         texinfo \
         zlib1g-dev \
         gzip \
-    && mkdir ffmpeg_sources && mkdir ffmpeg_build \
-    && cd ffmpeg_sources \
     && curl -L -O http://downloads.sourceforge.net/project/lame/lame/3.99/lame-3.99.5.tar.gz \
     && tar xzvf lame-3.99.5.tar.gz && cd lame-3.99.5 \
-    && ./configure --prefix="/ffmpeg_build" --enable-nasm --disable-shared \
+    && ./configure --prefix="/usr/local/ffmpeg_build" --enable-nasm --disable-shared \
     && make && make install && cd .. \
     && curl -L -O http://ffmpeg.org/releases/ffmpeg-3.3.2.tar.bz2 \
     && tar xjvf ffmpeg-3.3.2.tar.bz2 && cd ffmpeg-3.3.2 \
     && ./configure \
       --prefix="/ffmpeg_build" \
       --pkg-config-flags="--static" \
-      --extra-cflags="-I/ffmpeg_build/include" \
-      --extra-ldflags="-L/ffmpeg_build/lib" \
+      --extra-cflags="-I/usr/local/ffmpeg_build/include" \
+      --extra-ldflags="-L/usr/local/ffmpeg_build/lib" \
       --bindir="/usr/bin" \
       --enable-libmp3lame \
     && make && make install && cd .. \
