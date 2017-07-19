@@ -6,14 +6,15 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
 	zmq "github.com/pebbe/zmq4"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
-	"os"
-	"io"
 )
 
 const (
@@ -226,6 +227,40 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 	uploadOriginalAudioChannel <- AudioUploadTask{
 		Buffer: formattedFile,
 		Path:   "audios/" + getHashPath(formattedFile) + fmt.Sprintf("%s", fileName),
+	}
+
+	dir, err := os.Open("/tmp")
+	if err != nil {
+		writeJSONResponse(
+			response,
+			http.StatusInternalServerError,
+			newErrorJson(
+				fmt.Sprintf("Cannot open directory %s", dir.Name()),
+			),
+		)
+
+		return
+	}
+
+	files, err := dir.Readdir(-1)
+	if err != nil {
+		writeJSONResponse(
+			response,
+			http.StatusInternalServerError,
+			newErrorJson(
+				fmt.Sprintf("Cannot read directory %s", dir.Name()),
+			),
+		)
+
+		return
+	}
+
+	for _, file := range files {
+		if file.Mode().IsRegular() {
+			if filepath.Ext(file.Name()) == ".mp3" || filepath.Ext(file.Name()) == ".aac" {
+				os.Remove(file.Name())
+			}
+		}
 	}
 
 	writeJSONResponse(

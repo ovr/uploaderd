@@ -66,8 +66,8 @@ var (
 	}
 
 	// upload to S3 channel
-	uploadThumbnailChannel chan ImageUploadTask
-	uploadOriginalChannel  chan ImageUploadTask
+	uploadThumbnailChannel     chan ImageUploadTask
+	uploadOriginalChannel      chan ImageUploadTask
 	uploadOriginalAudioChannel chan AudioUploadTask
 )
 
