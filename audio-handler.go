@@ -222,7 +222,7 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		Path:    getHashPath(formattedFile) + fmt.Sprintf("%s", fileName),
 		Created: time.Now(),
 	}
-	go this.DB.Save(audio)
+	go this.DB.Create(audio)
 
 	uploadOriginalAudioChannel <- AudioUploadTask{
 		Buffer: formattedFile,

@@ -322,7 +322,7 @@ func (this ImagePostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		ModApproved:  false,
 		Hidden:       false,
 	}
-	go this.DB.Save(photo)
+	go this.DB.Create(photo)
 
 	uploadOriginalChannel <- ImageUploadTask{
 		Buffer: imageBox.GetImageBlob(),
