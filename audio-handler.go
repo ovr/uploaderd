@@ -29,7 +29,7 @@ const (
 )
 
 func isAudioContentType(contentType string) bool {
-	return contentType == "audio/aac"
+	return contentType == "audio/aac" || contentType == "audio/wav"
 }
 
 type AudioPostHandler struct {
@@ -158,6 +158,8 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 				fmt.Sprintf("Error when parse %s", audioInfo.Filename),
 			),
 		)
+
+		return
 	}
 
 	if audioDuration > MAX_AUDIO_LENGTH {
@@ -172,7 +174,14 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 
 	audioId := generateUUID(this.ZMQ)
 
-	fileName := fmt.Sprintf("%d_%d_%s.mp3", uid, audioId, strings.TrimRight(audioInfo.Filename, ".aac"))
+	var fileName string
+
+	fileExt := filepath.Ext(audioInfo.Filename)
+	if fileExt == ".aac" {
+		fileName = fmt.Sprintf("%d_%d_%s.mp3", uid, audioId, strings.TrimRight(audioInfo.Filename, ".aac"))
+	} else {
+		fileName = fmt.Sprintf("%d_%d_%s.mp3", uid, audioId, strings.TrimRight(audioInfo.Filename, ".wav"))
+	}
 
 	exec.Command(
 		"ffmpeg",
@@ -198,6 +207,8 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 				fmt.Sprintf("Cannot read file %s after proccesing via ffmpeg", fileName),
 			),
 		)
+
+		return
 	}
 
 	if len(formattedFile) > MAX_ORIGINAL_FILE_SIZE {
@@ -257,7 +268,8 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 
 	for _, file := range files {
 		if file.Mode().IsRegular() {
-			if filepath.Ext(file.Name()) == ".mp3" || filepath.Ext(file.Name()) == ".aac" {
+			fileExt := filepath.Ext(file.Name())
+			if fileExt == ".mp3" || fileExt == ".aac" || fileExt == ".wav" {
 				os.Remove(file.Name())
 			}
 		}
