@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -34,7 +35,7 @@ func isAudioContentType(contentType string) bool {
 type AudioPostHandler struct {
 	http.Handler
 
-	DB  *gorm.DB
+	DB            *gorm.DB
 	UUIDGenerator *UUIDGenerator
 }
 
@@ -50,6 +51,8 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 			http.StatusBadRequest,
 			newErrorJson("We cannot find upload file inside file field"),
 		)
+
+		log.Print(err)
 
 		return
 	}
@@ -78,6 +81,8 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 			),
 		)
 
+		log.Print(err)
+
 		return
 	}
 	defer buff.Close()
@@ -92,6 +97,8 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 			),
 		)
 
+		log.Print(err)
+
 		return
 	}
 
@@ -104,6 +111,8 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 				fmt.Sprintf("Cannot read file %s", audioInfo.Filename),
 			),
 		)
+
+		log.Print(err)
 
 		return
 	}
@@ -134,16 +143,18 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		"format=duration",
 		"-of",
 		"default=noprint_wrappers=1:nokey=1",
-	).Output()
+	).CombinedOutput()
 
 	if err != nil {
 		writeJSONResponse(
 			response,
 			http.StatusInternalServerError,
 			newErrorJson(
-				fmt.Sprintf("Cannot process audio file %s via ffprobe", audioInfo.Filename),
+				fmt.Sprintf("Cannot process audio file %s", audioInfo.Filename),
 			),
 		)
+
+		log.Print(err)
 
 		return
 	}
@@ -157,6 +168,8 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 				fmt.Sprintf("Error when parse %s", audioInfo.Filename),
 			),
 		)
+
+		log.Print(err)
 
 		return
 	}
@@ -182,7 +195,7 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		fileName = fmt.Sprintf("%d_%d_%s.mp3", uid, audioId, strings.TrimRight(audioInfo.Filename, ".wav"))
 	}
 
-	exec.Command(
+	_, err = exec.Command(
 		"ffmpeg",
 		"-v",
 		"quiet",
@@ -195,7 +208,21 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		"-ac",
 		"1",
 		fileName,
-	).Run()
+	).CombinedOutput()
+
+	if err != nil {
+		writeJSONResponse(
+			response,
+			http.StatusInternalServerError,
+			newErrorJson(
+				fmt.Sprintf("Cannot process audio file %s", audioInfo.Filename),
+			),
+		)
+
+		log.Print(err)
+
+		return
+	}
 
 	formattedFile, err := ioutil.ReadFile(fileName)
 	if err != nil {
@@ -203,9 +230,11 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 			response,
 			http.StatusInternalServerError,
 			newErrorJson(
-				fmt.Sprintf("Cannot read file %s after proccesing via ffmpeg", fileName),
+				fmt.Sprintf("Cannot read file %s after proccesing", fileName),
 			),
 		)
+
+		log.Print(err)
 
 		return
 	}
@@ -249,6 +278,8 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 			),
 		)
 
+		log.Print(err)
+
 		return
 	}
 
@@ -261,6 +292,8 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 				fmt.Sprintf("Cannot read directory %s", dir.Name()),
 			),
 		)
+
+		log.Print(err)
 
 		return
 	}
