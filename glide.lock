@@ -1,5 +1,5 @@
-hash: 6fb65b2658d987fb19677a81886bee543628a0a8b46fc48411baed4af9067fc1
-updated: 2017-06-26T04:33:27.684655832Z
+hash: 681295dfa2fb69ce9ceaa53a3ff48a17da0d541616ec51a32672c82c004a08ce
+updated: 2017-07-27T08:02:39.528695617Z
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 00fb2125993965df739fa3398b03bef3eb2e198f
@@ -51,6 +51,8 @@ imports:
   - internal/utilization
 - name: github.com/pebbe/zmq4
   version: 86a301353efd154593d5c851a092dc21e907a601
+- name: github.com/sirupsen/logrus
+  version: a3f95b5c423586578a4e099b11a46c2479628cac
 - name: github.com/urfave/negroni
   version: fde5e16d32adc7ad637e9cd9ad21d4ebc6192535
 - name: gopkg.in/gographics/imagick.v3
