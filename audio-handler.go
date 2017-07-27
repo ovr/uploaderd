@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
-	zmq "github.com/pebbe/zmq4"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -36,7 +35,7 @@ type AudioPostHandler struct {
 	http.Handler
 
 	DB  *gorm.DB
-	ZMQ *zmq.Socket
+	UUIDGenerator *UUIDGenerator
 }
 
 func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
@@ -172,7 +171,7 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		return
 	}
 
-	audioId := generateUUID(this.ZMQ)
+	audioId := this.UUIDGenerator.Get()
 
 	var fileName string
 
