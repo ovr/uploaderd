@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"github.com/newrelic/go-agent"
@@ -88,7 +87,8 @@ func main() {
 	)
 
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
+
 		os.Exit(1)
 	}
 
@@ -125,5 +125,10 @@ func main() {
 	n := negroni.New(negroni.NewRecovery(), negroni.NewLogger(), NewJWT(configuration.JWT.SecretKey))
 	n.UseHandler(mux)
 
-	http.ListenAndServe(":8989", n)
+	err = http.ListenAndServe(":8989", n)
+	if err != nil {
+		log.Fatal(err)
+
+		os.Exit(1)
+	}
 }
