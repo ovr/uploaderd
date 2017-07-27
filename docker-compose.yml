@@ -2,7 +2,7 @@ version: '2'
 
 services:
   cruftflake:
-    image: interpalsnet/cruftflake:1.0.0
+    image: interpalsnet/cruftflake:1.0.1
 
     restart: always
 
@@ -12,9 +12,6 @@ services:
       nofile:
         soft: 20000
         hard: 40000
-
-    ports:
-      - "5599:5599"
 
   uploaderd:
     build: .
