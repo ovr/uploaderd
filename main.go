@@ -6,6 +6,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"github.com/newrelic/go-agent"
+	log "github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 	"gopkg.in/gographics/imagick.v3/imagick" // v3 for 7+
 	"net/http"
@@ -75,6 +76,12 @@ func main() {
 
 	configuration := &Configuration{}
 	configuration.Init(configFile)
+
+	log.SetFormatter(&log.JSONFormatter{})
+
+	if configuration.Debug {
+		log.SetLevel(log.DebugLevel)
+	}
 
 	app, err := newrelic.NewApplication(
 		newrelic.NewConfig(configuration.NewRelic.AppName, configuration.NewRelic.Key),

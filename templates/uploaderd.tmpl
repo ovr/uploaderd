@@ -8,9 +8,7 @@
     "uri": "{{ getenv "DB_ADDR" }}",
     "max-idle-connections": 1,
     "max-open-connections": 10,
-    "log": true,
-    "threads": 4,
-    "limit": 500
+    "log": true
   },
   "s3": {
     "access_key": "{{ getenv "S3_PHOTO_ACCESS_KEY" }}",
@@ -25,5 +23,6 @@
   },
   "jwt": {
     "secret_key": "{{ getenv "JWT_SECRET" }}"
-  }
+  },
+  "debug": true
 }

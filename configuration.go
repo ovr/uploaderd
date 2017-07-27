@@ -13,8 +13,6 @@ type DataBaseConfig struct {
 	MaxIdleConnections int    `json:"max-idle-connections"`
 	MaxOpenConnections int    `json:"max-open-connections"`
 	ShowLog            bool   `json:"log"`
-	Threads            uint8  `json:"threads"`
-	Limit              uint16 `json:"limit"`
 }
 
 type S3Config struct {
@@ -46,6 +44,7 @@ type Configuration struct {
 	S3         S3Config         `json:"s3"`
 	CruftFlake CruftFlakeConfig `json:"cruftflake"`
 	JWT        JWTConfig        `json:"jwt"`
+	Debug      bool             `json:"debug"`
 }
 
 func (this *Configuration) Init(configFile string) {
