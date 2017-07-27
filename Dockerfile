@@ -31,7 +31,7 @@ RUN apt-get update \
     && curl -o ImageMagick.tar.gz https://codeload.github.com/ImageMagick/ImageMagick/tar.gz/$IMAGEMAGICK_VERSION \
     && tar xvzf ImageMagick.tar.gz && rm ImageMagick.tar.gz \
     && cd ImageMagick-* \
-    && ./configure --without-magick-plus-plus \
+    && ./configure --without-magick-plus-plus --with-quantum-depth=8 \
     && make && make install && ldconfig /usr/local/lib && cd .. \
     && rm -rf ImageMagick-* \
     && curl https://glide.sh/get | sh \
