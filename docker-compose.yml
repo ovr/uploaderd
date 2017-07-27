@@ -1,6 +1,21 @@
 version: '2'
 
 services:
+  cruftflake:
+    image: interpalsnet/cruftflake:1.0.0
+
+    restart: always
+
+    mem_limit: 128m
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 20000
+        hard: 40000
+
+    ports:
+      - "5599:5599"
+
   uploaderd:
     build: .
     environment:
@@ -9,7 +24,7 @@ services:
 
       # Common
       JWT_SECRET: ${INTERPALS_JWT_SECRET}
-      CRUFTFLAKE_ADDR: ${INTERPALS_CRUFTFLAKE_ADDR}
+      CRUFTFLAKE_ADDR: "tcp://cruftflake:5599"
 
       # DB
       DB_ADDR: ${INTERPALS_DB_ADDR}
@@ -22,7 +37,12 @@ services:
     ports:
       - "8989:8989"
 
-    network_mode: host
+    links:
+      - cruftflake
+
+    depends_on:
+      - cruftflake
+
     restart: always
 
     mem_limit: 1024m
