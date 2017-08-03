@@ -186,14 +186,8 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 
 	audioId := this.UUIDGenerator.Get()
 
-	var fileName string
-
 	fileExt := filepath.Ext(audioInfo.Filename)
-	if fileExt == ".aac" {
-		fileName = fmt.Sprintf("%d_%d_%s.mp3", uid, audioId, strings.TrimRight(audioInfo.Filename, ".aac"))
-	} else {
-		fileName = fmt.Sprintf("%d_%d_%s.mp3", uid, audioId, strings.TrimRight(audioInfo.Filename, ".wav"))
-	}
+	fileName := fmt.Sprintf("%d_%d_%s.mp3", uid, audioId, strings.TrimRight(audioInfo.Filename, fileExt))
 
 	_, err = exec.Command(
 		"ffmpeg",
@@ -263,7 +257,7 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 	}
 	go this.DB.Create(audio)
 
-	uploadOriginalAudioChannel <- AudioUploadTask{
+	uploadAudioChannel <- AudioUploadTask{
 		Buffer: formattedFile,
 		Path:   "audios/" + getHashPath(formattedFile) + fmt.Sprintf("%s", fileName),
 	}

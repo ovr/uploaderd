@@ -66,9 +66,9 @@ var (
 	}
 
 	// upload to S3 channel
-	uploadThumbnailChannel     chan ImageUploadTask
-	uploadOriginalChannel      chan ImageUploadTask
-	uploadOriginalAudioChannel chan AudioUploadTask
+	uploadThumbnailChannel chan ImageUploadTask
+	uploadOriginalChannel  chan ImageUploadTask
+	uploadAudioChannel     chan AudioUploadTask
 )
 
 func main() {
@@ -105,7 +105,7 @@ func main() {
 
 	uploadThumbnailChannel = make(chan ImageUploadTask, configuration.S3.UploadThumbnailChannelSize)
 	uploadOriginalChannel = make(chan ImageUploadTask, configuration.S3.UploadOriginalChannelSize)
-	uploadOriginalAudioChannel = make(chan AudioUploadTask, configuration.S3.UploadOriginalChannelSize)
+	uploadAudioChannel = make(chan AudioUploadTask, configuration.S3.UploadOriginalChannelSize)
 
 	db, err := gorm.Open(configuration.DB.Dialect, configuration.DB.Uri)
 	if err != nil {
@@ -120,7 +120,7 @@ func main() {
 
 	go startUploader(uploadThumbnailChannel, configuration.S3)
 	go startUploader(uploadOriginalChannel, configuration.S3)
-	go startAudioUploader(uploadOriginalAudioChannel, configuration.S3)
+	go startAudioUploader(uploadAudioChannel, configuration.S3)
 
 	UUIDGenerator := NewUUIDGenerator(configuration.CruftFlake.Uri)
 	go UUIDGenerator.Listen()
@@ -133,7 +133,7 @@ func main() {
 	}))
 
 	mux.Handle(newrelic.WrapHandle(app, "/v1/audio", AudioPostHandler{
-		DB:  db,
+		DB:            db,
 		UUIDGenerator: UUIDGenerator,
 	}))
 
