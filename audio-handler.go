@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
@@ -15,7 +16,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"bytes"
 )
 
 const (
@@ -87,6 +87,7 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		return
 	}
 	defer buff.Close()
+	defer os.Remove("/tmp/" + audioInfo.Filename)
 
 	_, err = io.Copy(buff, multiPartFile)
 	if err != nil {
@@ -137,12 +138,12 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 	cmd := exec.Command(
 		"ffprobe",
 		"-i",
-		"/tmp/" + audioInfo.Filename,
+		"/tmp/"+audioInfo.Filename,
 		"-show_entries",
 		"format=duration",
 		"-of",
 		"default=noprint_wrappers=1:nokey=1",
-	);
+	)
 
 	var (
 		// There are some uneeded information inside StdOut, skip it
@@ -154,7 +155,6 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 	cmd.Stderr = &ffprobeStdErr
 
 	err = cmd.Run()
-
 	if err != nil {
 		writeJSONResponse(
 			response,
@@ -185,7 +185,7 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		return
 	}
 
-	log.Debug("Duration ", audioDuration);
+	log.Debug("Duration ", audioDuration)
 
 	if audioDuration > MAX_AUDIO_LENGTH {
 		writeJSONResponse(
@@ -205,20 +205,21 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 	cmd = exec.Command(
 		"ffmpeg",
 		"-i",
-		"/tmp/" + audioInfo.Filename,
+		"/tmp/"+audioInfo.Filename,
 		"-c:a",
 		"libmp3lame",
 		"-b:a",
 		"32k",
 		"-ac",
 		"1",
-		"/tmp/" + fileName,
+		"/tmp/"+fileName,
 	)
 
+	// We dont neeeded to catch StdOut
 	var ffmpegStdErr bytes.Buffer
-
 	cmd.Stderr = &ffmpegStdErr
 
+	err = cmd.Run()
 	if err != nil {
 		writeJSONResponse(
 			response,
@@ -234,13 +235,15 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		return
 	}
 
+	defer os.Remove("/tmp/" + fileName)
+
 	formattedFile, err := ioutil.ReadFile("/tmp/" + fileName)
 	if err != nil {
 		writeJSONResponse(
 			response,
 			http.StatusInternalServerError,
 			newErrorJson(
-				fmt.Sprintf("Cannot read file %s after proccesing", "/tmp/" + fileName),
+				fmt.Sprintf("Cannot read file %s after proccesing", "/tmp/"+fileName),
 			),
 		)
 
@@ -276,45 +279,6 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 	uploadAudioChannel <- AudioUploadTask{
 		Buffer: formattedFile,
 		Path:   "audios/" + getHashPath(formattedFile) + fmt.Sprintf("%s", fileName),
-	}
-
-	dir, err := os.Open("/tmp")
-	if err != nil {
-		writeJSONResponse(
-			response,
-			http.StatusInternalServerError,
-			newErrorJson(
-				fmt.Sprintf("Cannot open directory %s", dir.Name()),
-			),
-		)
-
-		log.Print(err)
-
-		return
-	}
-
-	files, err := dir.Readdir(-1)
-	if err != nil {
-		writeJSONResponse(
-			response,
-			http.StatusInternalServerError,
-			newErrorJson(
-				fmt.Sprintf("Cannot read directory %s", dir.Name()),
-			),
-		)
-
-		log.Print(err)
-
-		return
-	}
-
-	for _, file := range files {
-		if file.Mode().IsRegular() {
-			fileExt := filepath.Ext(file.Name())
-			if fileExt == ".mp3" || fileExt == ".aac" || fileExt == ".wav" {
-				os.Remove(file.Name())
-			}
-		}
 	}
 
 	writeJSONResponse(
