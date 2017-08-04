@@ -164,7 +164,7 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 			),
 		)
 
-		log.Print(err)
+		log.Print("FFProbe error ", err)
 		log.Print(string(ffprobeStdErr.Bytes()))
 
 		return
@@ -202,7 +202,7 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 	fileExt := filepath.Ext(audioInfo.Filename)
 	fileName := fmt.Sprintf("%d_%d_%s.mp3", uid, audioId, strings.TrimRight(audioInfo.Filename, fileExt))
 
-	_, err = exec.Command(
+	cmd = exec.Command(
 		"ffmpeg",
 		"-i",
 		"/tmp/" + audioInfo.Filename,
@@ -212,8 +212,12 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		"32k",
 		"-ac",
 		"1",
-		fileName,
-	).CombinedOutput()
+		"/tmp/" + fileName,
+	)
+
+	var ffmpegStdErr bytes.Buffer
+
+	cmd.Stderr = &ffmpegStdErr
 
 	if err != nil {
 		writeJSONResponse(
@@ -224,18 +228,19 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 			),
 		)
 
-		log.Print(err)
+		log.Print("FFMpeg error ", err)
+		log.Print(string(ffmpegStdErr.Bytes()))
 
 		return
 	}
 
-	formattedFile, err := ioutil.ReadFile(fileName)
+	formattedFile, err := ioutil.ReadFile("/tmp/" + fileName)
 	if err != nil {
 		writeJSONResponse(
 			response,
 			http.StatusInternalServerError,
 			newErrorJson(
-				fmt.Sprintf("Cannot read file %s after proccesing", fileName),
+				fmt.Sprintf("Cannot read file %s after proccesing", "/tmp/" + fileName),
 			),
 		)
 
