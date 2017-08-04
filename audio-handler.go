@@ -185,6 +185,8 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		return
 	}
 
+	log.Debug("Duration ", audioDuration);
+
 	if audioDuration > MAX_AUDIO_LENGTH {
 		writeJSONResponse(
 			response,
