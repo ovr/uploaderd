@@ -137,7 +137,7 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 	cmd := exec.Command(
 		"ffprobe",
 		"-i",
-		audioInfo.Filename,
+		"/tmp/" + audioInfo.Filename,
 		"-show_entries",
 		"format=duration",
 		"-of",
@@ -203,7 +203,7 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 	_, err = exec.Command(
 		"ffmpeg",
 		"-i",
-		audioInfo.Filename,
+		"/tmp/" + audioInfo.Filename,
 		"-c:a",
 		"libmp3lame",
 		"-b:a",
