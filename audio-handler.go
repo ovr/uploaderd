@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"bytes"
 )
 
 const (
@@ -133,17 +134,26 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		return
 	}
 
-	cmd, err := exec.Command(
+	cmd := exec.Command(
 		"ffprobe",
 		"-i",
 		audioInfo.Filename,
-		"-v",
-		"quiet",
 		"-show_entries",
 		"format=duration",
 		"-of",
 		"default=noprint_wrappers=1:nokey=1",
-	).CombinedOutput()
+	);
+
+	var (
+		// There are some uneeded information inside StdOut, skip it
+		ffprobeStdOut bytes.Buffer
+		ffprobeStdErr bytes.Buffer
+	)
+
+	cmd.Stdout = &ffprobeStdOut
+	cmd.Stderr = &ffprobeStdErr
+
+	err = cmd.Run()
 
 	if err != nil {
 		writeJSONResponse(
@@ -155,11 +165,12 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		)
 
 		log.Print(err)
+		log.Print(string(ffprobeStdErr.Bytes()))
 
 		return
 	}
 
-	audioDuration, err := strconv.ParseFloat(strings.Trim(string(cmd), "\n"), 32)
+	audioDuration, err := strconv.ParseFloat(strings.Trim(string(ffprobeStdOut.Bytes()), "\n"), 32)
 	if err != nil {
 		writeJSONResponse(
 			response,
@@ -191,8 +202,6 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 
 	_, err = exec.Command(
 		"ffmpeg",
-		"-v",
-		"quiet",
 		"-i",
 		audioInfo.Filename,
 		"-c:a",
