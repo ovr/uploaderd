@@ -13,7 +13,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -138,12 +137,13 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 
 	cmd := exec.Command(
 		"ffprobe",
+		"-v",
+		"error",
 		"-i",
 		"/tmp/"+audioInfo.Filename,
-		"-show_entries",
-		"format=duration",
-		"-of",
-		"default=noprint_wrappers=1:nokey=1",
+		"-print_format",
+		"json",
+		"-show_format",
 	)
 
 	var (
@@ -171,7 +171,10 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		return
 	}
 
-	audioDuration, err := strconv.ParseFloat(strings.Trim(string(ffprobeStdOut.Bytes()), "\n"), 32)
+	ffprobeOutput := ffprobeStdOut.Bytes()
+	ffprobeResult := AudioFFProbe{}
+
+	err = json.Unmarshal(ffprobeOutput, &ffprobeResult)
 	if err != nil {
 		writeJSONResponse(
 			response,
@@ -182,13 +185,14 @@ func (this AudioPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		)
 
 		log.Print(err)
+		log.Print(string(ffprobeOutput))
 
 		return
 	}
 
-	log.Debug("Duration ", audioDuration)
+	log.Debug("Duration ", ffprobeResult.Format.Duration)
 
-	if audioDuration > MAX_AUDIO_LENGTH {
+	if ffprobeResult.Format.Duration > MAX_AUDIO_LENGTH {
 		writeJSONResponse(
 			response,
 			http.StatusBadRequest,
