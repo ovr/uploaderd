@@ -10,6 +10,16 @@ type Album struct {
 	PhotosTotal uint32 `gorm:"column:photo_total"`
 }
 
+type FFProbeFormat struct {
+	StreamsCount int32   `json:"nb_streams"`
+	Format       string  `json:"format_name"`
+	Duration     float32 `json:"duration,string"`
+}
+
+type AudioFFProbe struct {
+	Format FFProbeFormat `json:"format"`
+}
+
 type Photo struct {
 	Id           uint64    `gorm:"column:photo_id" json:"id,string"`
 	Added        time.Time `gorm:"column:added" json:"created"`
