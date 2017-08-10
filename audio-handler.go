@@ -30,7 +30,8 @@ const (
 )
 
 func isAudioContentType(contentType string) bool {
-	return contentType == "audio/aac" || contentType == "audio/wav"
+	// application/octet-stream - binary file without format, some encoders can record audio without mime type
+	return contentType == "audio/aac" || contentType == "audio/wav" || contentType == "application/octet-stream"
 }
 
 type AudioPostHandler struct {
