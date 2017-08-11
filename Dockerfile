@@ -5,7 +5,9 @@ MAINTAINER Patsura Dmitry <talk@dmtry.me>
 ENV PATH /go/bin:/usr/local/go/bin:/usr/bin$PATH
 ENV GOPATH /go
 ENV PKG_CONFIG_PATH /usr/local/ffmpeg_build/lib/pkgconfig:$PKG_CONFIG_PATH
+
 ENV IMAGEMAGICK_VERSION 7.0.6-1
+ENV FFMPEG_VERSION 3.3.3
 
 RUN mkdir -p /etc/confd/{conf.d,templates}
 RUN mkdir -p /etc/interpals
@@ -47,8 +49,8 @@ RUN apt-get update \
     && tar xzvf lame-3.99.5.tar.gz && cd lame-3.99.5 \
     && ./configure --prefix="/usr/local/ffmpeg_build" --enable-nasm --disable-shared \
     && make && make install && cd .. \
-    && curl -L -O http://ffmpeg.org/releases/ffmpeg-3.3.2.tar.bz2 \
-    && tar xjvf ffmpeg-3.3.2.tar.bz2 && cd ffmpeg-3.3.2 \
+    && curl -L -O http://ffmpeg.org/releases/ffmpeg-$FFMPEG_VERSION.tar.bz2 \
+    && tar xjvf ffmpeg-$FFMPEG_VERSION.tar.bz2 && cd ffmpeg-$FFMPEG_VERSION \
     && ./configure \
       --prefix="/ffmpeg_build" \
       --pkg-config-flags="--static" \
@@ -57,7 +59,7 @@ RUN apt-get update \
       --bindir="/usr/bin" \
       --enable-libmp3lame \
     && make && make install && cd .. \
-    && rm -rf ffmpeg-3.3.2 && rm -rf lame-3.99.5 \
+    && rm -rf ffmpeg-$FFMPEG_VERSION && rm -rf lame-3.99.5 \
     && curl -o ImageMagick.tar.gz https://codeload.github.com/ImageMagick/ImageMagick/tar.gz/$IMAGEMAGICK_VERSION \
     && tar xvzf ImageMagick.tar.gz && rm ImageMagick.tar.gz \
     && cd ImageMagick-* \
