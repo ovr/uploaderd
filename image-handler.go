@@ -1,8 +1,6 @@
 package main
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
@@ -259,10 +257,7 @@ func (this ImagePostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		return
 	}
 
-	hasher := md5.New()
-	hasher.Write(buff)
-	hash := hex.EncodeToString(hasher.Sum(nil))
-	hashPathPart := hash[0:2] + "/" + hash[2:4] + "/"
+	hashPathPart := getHashPath(buff)
 
 	photoId := this.UUIDGenerator.Get()
 
