@@ -35,14 +35,14 @@ func isImageContentType(contentType string) bool {
 	return contentType == "image/png" || contentType == "image/jpeg" || contentType == "image/gif"
 }
 
-type ImagePostHandler struct {
+type PhotoPostHandler struct {
 	http.Handler
 
 	DB            *gorm.DB
 	UUIDGenerator *UUIDGenerator
 }
 
-func (this ImagePostHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+func (this PhotoPostHandler) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 	var (
 		albumId *uint64
 	)

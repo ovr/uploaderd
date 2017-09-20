@@ -127,7 +127,7 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.Handle(newrelic.WrapHandle(app, "/v1/image", ImagePostHandler{
+	mux.Handle(newrelic.WrapHandle(app, "/v1/photo", PhotoPostHandler{
 		DB:            db,
 		UUIDGenerator: UUIDGenerator,
 	}))
