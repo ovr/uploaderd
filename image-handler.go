@@ -319,6 +319,8 @@ func (this ImagePostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 	}
 	go this.DB.Create(photo)
 
+	go updateFeed(fmt.Sprintf("http://api.ipvm.interpals.net/v1/photo/%d/action/photo-hook", photoId), token.Raw)
+
 	uploadOriginalChannel <- ImageUploadTask{
 		Buffer: imageBox.GetImageBlob(),
 		Path:   "photos/" + hashPathPart + fmt.Sprintf("%dx%d_%d_%d.jpg", imageBox.Width, imageBox.Height, uid, photoId),
@@ -407,4 +409,20 @@ func (this ImagePostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		http.StatusCreated,
 		photo.getApiData(),
 	)
+}
+
+func updateFeed(url string, token string) {
+	request, err := http.NewRequest("PUT", url, nil)
+	request.Header.Set("X-AUTH-TOKEN", token)
+
+	client := &http.Client{
+		Timeout: time.Duration(60 * time.Second),
+	}
+
+	response, err := client.Do(request)
+	if err != nil {
+		log.Print(err)
+	}
+
+	defer response.Body.Close()
 }
