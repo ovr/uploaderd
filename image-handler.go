@@ -2,12 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/gographics/imagick.v3/imagick"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
@@ -317,9 +319,17 @@ func (this ImagePostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		ModApproved:  false,
 		Hidden:       false,
 	}
+
 	go this.DB.Create(photo)
 
-	go updateFeed(fmt.Sprintf("http://api.ipvm.interpals.net/v1/photo/%d/action/photo-hook", photoId), token.Raw)
+	go func() {
+		err = updateFeed(fmt.Sprintf("http://api.ipvm.interpals.net/v1/photo/%d/action/photo-hook", photoId), token.Raw)
+		if err != nil {
+			log.Print(fmt.Sprintf("Feed update is failure. %s", err))
+
+			return
+		}
+	}()
 
 	uploadOriginalChannel <- ImageUploadTask{
 		Buffer: imageBox.GetImageBlob(),
@@ -411,18 +421,47 @@ func (this ImagePostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 	)
 }
 
-func updateFeed(url string, token string) {
-	request, err := http.NewRequest("PUT", url, nil)
-	request.Header.Set("X-AUTH-TOKEN", token)
-
+func updateFeed(url string, token string) error {
 	client := &http.Client{
 		Timeout: time.Duration(60 * time.Second),
 	}
 
-	response, err := client.Do(request)
-	if err != nil {
-		log.Print(err)
+	request, _ := http.NewRequest("PUT", url, nil)
+	request.Header.Set("X-AUTH-TOKEN", token)
+
+	return retry(2, time.Second, func() error {
+		response, err := client.Do(request)
+		if err != nil {
+			return err
+		}
+		defer response.Body.Close()
+
+		responseData, _ := ioutil.ReadAll(response.Body)
+		if response.StatusCode >= 500 {
+			return errors.New(string(responseData))
+		}
+
+		return nil
+	})
+}
+
+func retry(attempts int, sleep time.Duration, f func() error) error {
+	if err := f(); err != nil {
+
+		log.Print("Trying to update feed")
+
+		if attempts--; attempts > 0 {
+			randTime := time.Duration(rand.Int63n(int64(sleep)))
+			sleep = sleep + randTime/2
+
+			time.Sleep(sleep)
+
+			return retry(attempts, 2*sleep, f)
+		}
+
+		return err
 	}
 
-	defer response.Body.Close()
+	log.Print("Feed update is success")
+	return nil
 }
