@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"sync"
 )
 
 const (
@@ -320,12 +321,16 @@ func (this ImagePostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		Hidden:       false,
 	}
 
-	go this.DB.Create(photo)
+	mutex := &sync.Mutex{}
 
+	mutex.Lock()
 	go func() {
+		defer mutex.Unlock()
 		err = updateFeed(fmt.Sprintf("http://api.ipvm.interpals.net/v1/photo/%d/action/photo-hook", photoId), token.Raw)
 		if err != nil {
 			log.Print(fmt.Sprintf("Feed update is failure. %s", err))
+
+			this.DB.Where("photo_id = ?", photoId).Delete(Photo{})
 
 			return
 		}
@@ -413,6 +418,8 @@ func (this ImagePostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 			),
 		}
 	}
+
+	go this.DB.Create(photo)
 
 	writeJSONResponse(
 		response,
