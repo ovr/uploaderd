@@ -9,11 +9,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/gographics/imagick.v3/imagick"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
 	"sync"
+	"math/rand"
 )
 
 const (
@@ -326,9 +326,13 @@ func (this ImagePostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 	mutex.Lock()
 	go func() {
 		defer mutex.Unlock()
-		err = updateFeed(fmt.Sprintf("http://api.ipvm.interpals.net/v1/photo/%d/action/photo-hook", photoId), token.Raw)
+
+		err = retry(2, 2 * time.Second, func() (err error) {
+			err = updateFeed(fmt.Sprintf("http://api.ipvm.interpals.net/v1/photo/%d/action/photo-hook", photoId), token.Raw)
+			return
+		})
+
 		if err != nil {
-			log.Print(fmt.Sprintf("Feed update is failure. %s", err))
 
 			this.DB.Where("photo_id = ?", photoId).Delete(Photo{})
 
@@ -436,39 +440,46 @@ func updateFeed(url string, token string) error {
 	request, _ := http.NewRequest("PUT", url, nil)
 	request.Header.Set("X-AUTH-TOKEN", token)
 
-	return retry(2, time.Second, func() error {
-		response, err := client.Do(request)
-		if err != nil {
-			return err
-		}
-		defer response.Body.Close()
+	response, err := client.Do(request)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
 
-		responseData, _ := ioutil.ReadAll(response.Body)
-		if response.StatusCode >= 500 {
-			return errors.New(string(responseData))
-		}
-
-		return nil
-	})
-}
-
-func retry(attempts int, sleep time.Duration, f func() error) error {
-	if err := f(); err != nil {
-
-		log.Print("Trying to update feed")
-
-		if attempts--; attempts > 0 {
-			randTime := time.Duration(rand.Int63n(int64(sleep)))
-			sleep = sleep + randTime/2
-
-			time.Sleep(sleep)
-
-			return retry(attempts, 2*sleep, f)
-		}
-
+	responseData, err := ioutil.ReadAll(response.Body)
+	if err != nil {
 		return err
 	}
 
-	log.Print("Feed update is success")
+	if response.StatusCode >= 500 {
+		return errors.New(string(responseData))
+	}
+
 	return nil
+}
+
+func retry(attempts int, sleep time.Duration, f func() error) (err error) {
+
+	for i := 0; ; i++ {
+
+		log.Print(fmt.Sprintf("Trying to update feed, attempt: %d", i))
+
+		err = f()
+		if err == nil {
+			return
+		}
+
+		if i >= (attempts - 1) {
+			break
+		}
+
+		randTime := time.Duration(rand.Int63n(int64(sleep)))
+		sleep = sleep + randTime / 2
+
+		time.Sleep(sleep)
+	}
+
+	log.Print(fmt.Sprintf("Feed update is failur, after %d attempts, last error: %s", attempts, err))
+
+	return err
 }
