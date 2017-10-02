@@ -205,18 +205,13 @@ func (this VideoPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 	videoId := this.UUIDGenerator.Get()
 
 	fileExt := filepath.Ext(videoInfo.Filename)
-	fileName := fmt.Sprintf("%d_%d_%s.mp3", uid, videoId, strings.TrimRight(videoInfo.Filename, fileExt))
+	fileName := fmt.Sprintf("%d_%d_%s.mp4", uid, videoId, strings.TrimRight(videoInfo.Filename, fileExt))
 
 	cmd = exec.Command(
 		"ffmpeg",
 		"-i",
 		"/tmp/"+videoInfo.Filename,
-		"-c:a",
-		"libmp3lame",
-		"-b:a",
-		"32k",
-		"-ac",
-		"1",
+		"-vcodec", "libx264",
 		"/tmp/"+fileName,
 	)
 
