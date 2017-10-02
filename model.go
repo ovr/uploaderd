@@ -20,6 +20,10 @@ type AudioFFProbe struct {
 	Format FFProbeFormat `json:"format"`
 }
 
+type VideoFFProbe struct {
+	Format FFProbeFormat `json:"format"`
+}
+
 type Photo struct {
 	Id           uint64    `gorm:"column:photo_id" json:"id,string"`
 	Added        time.Time `gorm:"column:added" json:"created"`
@@ -38,6 +42,13 @@ type Photo struct {
 	Hidden       bool      `gorm:"column:hidden" json:"-"`
 }
 
+type Video struct {
+	Id      uint64    `gorm:"column:id" json:"id,string"`
+	UserId  uint64    `gorm:"column:uid" json:"uid,string"`
+	Path    string    `gorm:"column:path" json:"path"`
+	Created time.Time `gorm:"column:created" json:"created"`
+}
+
 type Audio struct {
 	Id      uint64    `gorm:"column:id" json:"id,string"`
 	UserId  uint64    `gorm:"column:uid" json:"uid,string"`
@@ -47,6 +58,10 @@ type Audio struct {
 
 // @todo Will be used in the feature
 func (this Photo) getApiData() Photo {
+	return this
+}
+
+func (this Video) getApiData() Video {
 	return this
 }
 

@@ -52,6 +52,49 @@ func startUploader(channel chan ImageUploadTask, config S3Config) {
 	}
 }
 
+func startVideoUploader(channel chan VideoUploadTask, config S3Config) {
+
+	sess, err := session.NewSession(
+		&aws.Config{
+			Region: aws.String(config.Region),
+			Credentials: credentials.NewStaticCredentials(
+				config.AccessKey,
+				config.SecretKey,
+				"",
+			),
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	svc := s3.New(sess)
+
+	for {
+		select {
+		case task := <-channel:
+			log.Print("[Event] New video to Upload ", len(task.Buffer), " ", task.Path)
+
+			byteReader := bytes.NewReader(task.Buffer)
+
+			_, err := svc.PutObject(
+				&s3.PutObjectInput{
+					Bucket:        aws.String(config.Bucket),
+					Key:           &task.Path,
+					Body:          byteReader,
+					ContentLength: aws.Int64(byteReader.Size()),
+					ContentType:   aws.String("video/mp4"),
+					ACL:           aws.String(s3.ObjectCannedACLPublicRead),
+				},
+			)
+
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
+}
+
 func startAudioUploader(channel chan AudioUploadTask, config S3Config) {
 
 	sess, err := session.NewSession(

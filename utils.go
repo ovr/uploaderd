@@ -1,10 +1,10 @@
 package main
 
 import (
-	"encoding/json"
-	"net/http"
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
+	"net/http"
 )
 
 func writeJSONResponse(rw http.ResponseWriter, code int, result interface{}) {
@@ -14,7 +14,7 @@ func writeJSONResponse(rw http.ResponseWriter, code int, result interface{}) {
 	json.NewEncoder(rw).Encode(result)
 }
 
-func getHashPath(buff []byte) (string) {
+func getHashPath(buff []byte) string {
 	hasher := md5.New()
 	hasher.Write(buff)
 	hash := hex.EncodeToString(hasher.Sum(nil))

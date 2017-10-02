@@ -45,6 +45,12 @@ type AudioUploadTask struct {
 	Path   string
 }
 
+type VideoUploadTask struct {
+	// Array in slice, in-memory file
+	Buffer []byte
+	Path   string
+}
+
 var (
 	resizeImageDimmention []ImageDim = []ImageDim{
 		ImageDim{
@@ -69,6 +75,7 @@ var (
 	uploadThumbnailChannel chan ImageUploadTask
 	uploadOriginalChannel  chan ImageUploadTask
 	uploadAudioChannel     chan AudioUploadTask
+	uploadVideoChannel     chan VideoUploadTask
 )
 
 func main() {
@@ -106,6 +113,7 @@ func main() {
 	uploadThumbnailChannel = make(chan ImageUploadTask, configuration.S3.UploadThumbnailChannelSize)
 	uploadOriginalChannel = make(chan ImageUploadTask, configuration.S3.UploadOriginalChannelSize)
 	uploadAudioChannel = make(chan AudioUploadTask, configuration.S3.UploadOriginalChannelSize)
+	uploadVideoChannel = make(chan VideoUploadTask, configuration.S3.UploadOriginalChannelSize)
 
 	db, err := gorm.Open(configuration.DB.Dialect, configuration.DB.Uri)
 	if err != nil {
@@ -121,6 +129,7 @@ func main() {
 	go startUploader(uploadThumbnailChannel, configuration.S3)
 	go startUploader(uploadOriginalChannel, configuration.S3)
 	go startAudioUploader(uploadAudioChannel, configuration.S3)
+	go startVideoUploader(uploadVideoChannel, configuration.S3)
 
 	UUIDGenerator := NewUUIDGenerator(configuration.CruftFlake.Uri)
 	go UUIDGenerator.Listen()
@@ -133,6 +142,11 @@ func main() {
 	}))
 
 	mux.Handle(newrelic.WrapHandle(app, "/v1/audio", AudioPostHandler{
+		DB:            db,
+		UUIDGenerator: UUIDGenerator,
+	}))
+
+	mux.Handle(newrelic.WrapHandle(app, "/v1/video", VideoPostHandler{
 		DB:            db,
 		UUIDGenerator: UUIDGenerator,
 	}))

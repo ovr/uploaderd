@@ -62,8 +62,8 @@ func (this *ImageBox) FixOrientation() {
 		break
 	}
 
-	this.Width = uint64(this.mw.GetImageWidth());
-	this.Height = uint64(this.mw.GetImageHeight());
+	this.Width = uint64(this.mw.GetImageWidth())
+	this.Height = uint64(this.mw.GetImageHeight())
 }
 
 func (this *ImageBox) CropImage(width, height uint, x, y int) error {
