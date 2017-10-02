@@ -20,8 +20,15 @@ type AudioFFProbe struct {
 	Format FFProbeFormat `json:"format"`
 }
 
+type VideoStreamInfo struct {
+	Width    int32 `json:"width"`
+	Height   int32 `json:"height"`
+	Rotation int32 `json:"rotation"`
+}
+
 type VideoFFProbe struct {
-	Format FFProbeFormat `json:"format"`
+	Streams []VideoStreamInfo `json:"streams"`
+	Format  FFProbeFormat     `json:"format"`
 }
 
 type Photo struct {

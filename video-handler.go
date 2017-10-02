@@ -141,6 +141,7 @@ func (this VideoPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		"error",
 		"-i",
 		"/tmp/"+videoInfo.Filename,
+		"-select_streams", "v:0", "-show_entries", "stream=height,width",
 		"-print_format",
 		"json",
 		"-show_format",
@@ -206,13 +207,39 @@ func (this VideoPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 
 	fileExt := filepath.Ext(videoInfo.Filename)
 	fileName := fmt.Sprintf("%d_%d_%s.mp4", uid, videoId, strings.TrimRight(videoInfo.Filename, fileExt))
+	fileNameCover := fmt.Sprintf("%d_%d_%s_cover.mp4", uid, videoId, strings.TrimRight(videoInfo.Filename, fileExt))
 
+	parameters := []string{
+		"-i",
+		"/tmp/" + videoInfo.Filename,
+		"-vcodec", "libx264",
+		"-f", "mp4",
+	}
+
+	if len(ffprobeResult.Streams) > 1 {
+		if ffprobeResult.Streams[0].Width > 1920 || ffprobeResult.Streams[0].Height > 1080 {
+			parameters = append(parameters, "-vf")
+
+			if ffprobeResult.Streams[0].Rotation == 90 {
+				if ffprobeResult.Streams[0].Height > ffprobeResult.Streams[0].Width {
+					parameters = append(parameters, "scale='1920:1080'")
+				} else {
+					parameters = append(parameters, "scale='1080:1920'")
+				}
+			} else {
+				if ffprobeResult.Streams[0].Width > ffprobeResult.Streams[0].Height {
+					parameters = append(parameters, "scale='1920:1080'")
+				} else {
+					parameters = append(parameters, "scale='1080:1920'")
+				}
+			}
+		}
+	}
+
+	parameters = append(parameters, "/tmp/"+fileName)
 	cmd = exec.Command(
 		"ffmpeg",
-		"-i",
-		"/tmp/"+videoInfo.Filename,
-		"-vcodec", "libx264",
-		"/tmp/"+fileName,
+		parameters...,
 	)
 
 	// We dont neeeded to catch StdOut
@@ -235,7 +262,42 @@ func (this VideoPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 		return
 	}
 
+	coverTime := time.Duration(int(ffprobeResult.Format.Duration/2)) * time.Second
+	parametersCover := []string{
+		"-ss",
+		fmt.Sprintf(
+			"%02d:%02d:%02d",
+			int(coverTime.Hours()),
+			int(coverTime.Minutes()),
+			int(coverTime.Seconds()),
+		),
+		"-i",
+		"/tmp/" + videoInfo.Filename,
+		"-y",
+		"-vframes", "1",
+	}
+	parametersCover = append(parametersCover, "/tmp/"+fileNameCover)
+
+	cmdCover := exec.Command("ffmpeg", parametersCover...)
+	cmdCover.Stderr = &ffmpegStdErr
+	log.Print(parameters)
+	if err := cmdCover.Run(); err != nil {
+		writeJSONResponse(
+			response,
+			http.StatusBadRequest,
+			newErrorJson(
+				"Cannot save cover video",
+			),
+		)
+
+		log.Print("FFMpeg error ", err)
+		log.Print(string(ffmpegStdErr.Bytes()))
+
+		return
+	}
+
 	defer os.Remove("/tmp/" + fileName)
+	defer os.Remove("/tmp/" + fileNameCover)
 
 	formattedFile, err := ioutil.ReadFile("/tmp/" + fileName)
 	if err != nil {
@@ -279,6 +341,11 @@ func (this VideoPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 	uploadVideoChannel <- VideoUploadTask{
 		Buffer: formattedFile,
 		Path:   "videos/" + getHashPath(formattedFile) + fmt.Sprintf("%s", fileName),
+	}
+
+	uploadVideoChannel <- VideoUploadTask{
+		Buffer: formattedFile,
+		Path:   "videos/" + getHashPath(formattedFile) + fmt.Sprintf("%s", fileNameCover),
 	}
 
 	writeJSONResponse(
