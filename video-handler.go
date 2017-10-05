@@ -25,7 +25,7 @@ const (
 	MAX_ORIGINAL_VIDEO_FILE_SIZE = 1024 * 1024 * 100
 
 	// 15 min + 10 sec buff
-	MAX_VIDEO_LENGTH = 1510
+	MAX_VIDEO_LENGTH = 15*60 + 10
 )
 
 func isVideoContentType(contentType string) bool {
@@ -263,13 +263,24 @@ func (this VideoPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 	}
 
 	coverTime := time.Duration(int(ffprobeResult.Format.Duration/2)) * time.Second
+	sec := coverTime.Seconds()
+	min := coverTime.Minutes()
+	if sec >= 60 {
+		sec = 0
+		min = min + 1
+	}
+	hour := coverTime.Hours()
+	if min >= 60 {
+		min = 0
+		hour = hour + 1
+	}
 	parametersCover := []string{
 		"-ss",
 		fmt.Sprintf(
 			"%02d:%02d:%02d",
-			int(coverTime.Hours()),
-			int(coverTime.Minutes()),
-			int(coverTime.Seconds()),
+			int(hour),
+			int(min),
+			int(sec),
 		),
 		"-i",
 		"/tmp/" + videoInfo.Filename,
