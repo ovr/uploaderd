@@ -58,9 +58,10 @@ func startStatusUploader(status chan VideoUploadTask, config S3Config, DB *gorm.
 	for {
 		select {
 		case task := <-status:
-			// TODO wait both uploads
-			DB.Exec("UPDATE videos SET status = 'active' WHERE id = ?", task.VideoId)
-			log.Print("updated video status " + strconv.FormatUint(task.VideoId, 10))
+            if (task.VideoId > 0) {
+                DB.Exec("UPDATE videos SET status = 'active' WHERE id = ?", task.VideoId)
+                log.Print("updated video status " + strconv.FormatUint(task.VideoId, 10))
+            }
 		}
 	}
 }

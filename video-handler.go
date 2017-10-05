@@ -341,15 +341,15 @@ func (this VideoPostHandler) ServeHTTP(response http.ResponseWriter, request *ht
 	go this.DB.Create(video)
 
 	uploadVideoChannel <- VideoUploadTask{
-		VideoId: videoId,
+		VideoId: 0, // not used here
 		Buffer:  formattedFile,
-		Path:    "videos/" + getHashPath(formattedFile) + fmt.Sprintf("%s", fileName),
+		Path:    "videos/" + getHashPath(formattedFile) + fmt.Sprintf("%s", fileNameCover),
 	}
 
 	uploadVideoChannel <- VideoUploadTask{
-		VideoId: videoId,
+		VideoId: videoId, // needed to mark processing complete
 		Buffer:  formattedFile,
-		Path:    "videos/" + getHashPath(formattedFile) + fmt.Sprintf("%s", fileNameCover),
+		Path:    "videos/" + getHashPath(formattedFile) + fmt.Sprintf("%s", fileName),
 	}
 
 	writeJSONResponse(
