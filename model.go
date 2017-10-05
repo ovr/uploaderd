@@ -50,10 +50,12 @@ type Photo struct {
 }
 
 type Video struct {
-	Id      uint64    `gorm:"column:id" json:"id,string"`
-	UserId  uint64    `gorm:"column:uid" json:"uid,string"`
-	Path    string    `gorm:"column:path" json:"path"`
-	Created time.Time `gorm:"column:created" json:"created"`
+	Id       uint64    `gorm:"column:id" json:"id,string"`
+	UserId   uint64    `gorm:"column:uid" json:"uid,string"`
+	Path     string    `gorm:"column:path" json:"path"`
+	Preview  string    `gorm:"column:preview" json:"preview"`
+	Duration uint64    `gorm:"column:duration" json:"duration"`
+	Created  time.Time `gorm:"column:created" json:"created"`
 }
 
 type Audio struct {

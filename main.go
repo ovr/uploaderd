@@ -47,8 +47,9 @@ type AudioUploadTask struct {
 
 type VideoUploadTask struct {
 	// Array in slice, in-memory file
-	Buffer []byte
-	Path   string
+	VideoId uint64
+	Buffer  []byte
+	Path    string
 }
 
 var (
@@ -76,6 +77,7 @@ var (
 	uploadOriginalChannel  chan ImageUploadTask
 	uploadAudioChannel     chan AudioUploadTask
 	uploadVideoChannel     chan VideoUploadTask
+	statusVideoChannel     chan VideoUploadTask
 )
 
 func main() {
@@ -114,6 +116,7 @@ func main() {
 	uploadOriginalChannel = make(chan ImageUploadTask, configuration.S3.UploadOriginalChannelSize)
 	uploadAudioChannel = make(chan AudioUploadTask, configuration.S3.UploadOriginalChannelSize)
 	uploadVideoChannel = make(chan VideoUploadTask, configuration.S3.UploadOriginalChannelSize)
+	statusVideoChannel = make(chan VideoUploadTask, configuration.S3.UploadOriginalChannelSize)
 
 	db, err := gorm.Open(configuration.DB.Dialect, configuration.DB.Uri)
 	if err != nil {
@@ -129,7 +132,8 @@ func main() {
 	go startUploader(uploadThumbnailChannel, configuration.S3)
 	go startUploader(uploadOriginalChannel, configuration.S3)
 	go startAudioUploader(uploadAudioChannel, configuration.S3)
-	go startVideoUploader(uploadVideoChannel, configuration.S3)
+	go startVideoUploader(uploadVideoChannel, statusVideoChannel, configuration.S3)
+	go startStatusUploader(statusVideoChannel, configuration.S3, db)
 
 	UUIDGenerator := NewUUIDGenerator(configuration.CruftFlake.Uri)
 	go UUIDGenerator.Listen()

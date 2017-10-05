@@ -8,6 +8,8 @@ import (
 	"bytes"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/jinzhu/gorm"
+	"strconv"
 )
 
 func startUploader(channel chan ImageUploadTask, config S3Config) {
@@ -52,7 +54,18 @@ func startUploader(channel chan ImageUploadTask, config S3Config) {
 	}
 }
 
-func startVideoUploader(channel chan VideoUploadTask, config S3Config) {
+func startStatusUploader(status chan VideoUploadTask, config S3Config, DB *gorm.DB) {
+	for {
+		select {
+		case task := <-status:
+			// TODO wait both uploads
+			DB.Exec("UPDATE videos SET status = 'active' WHERE id = ?", task.VideoId)
+			log.Print("updated video status " + strconv.FormatUint(task.VideoId, 10))
+		}
+	}
+}
+
+func startVideoUploader(channel chan VideoUploadTask, status chan VideoUploadTask, config S3Config) {
 
 	sess, err := session.NewSession(
 		&aws.Config{
@@ -90,6 +103,8 @@ func startVideoUploader(channel chan VideoUploadTask, config S3Config) {
 
 			if err != nil {
 				panic(err)
+			} else {
+				status <- task
 			}
 		}
 	}
